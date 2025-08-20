@@ -76,6 +76,7 @@ const VehicleCard = ({ vehicle }: VehicleCardProps) => {
                 : 'bg-gray-600 text-gray-400 cursor-not-allowed'
             }`}
             disabled={!available}
+            onClick={() => available && (window.location.href = '/contact')}
           >
             {available ? 'Book Now' : 'Unavailable'}
           </button>

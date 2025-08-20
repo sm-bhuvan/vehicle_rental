@@ -1,4 +1,5 @@
 import { Car, Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
@@ -37,11 +38,11 @@ const Footer = () => {
           <div>
             <h3 className="font-bold text-lg mb-6 text-neon">Quick Links</h3>
             <ul className="space-y-3">
-              <li><a href="#home" className="text-gray-400 hover:text-foreground transition-colors">Home</a></li>
-              <li><a href="#vehicles" className="text-gray-400 hover:text-foreground transition-colors">Vehicles</a></li>
-              <li><a href="#services" className="text-gray-400 hover:text-foreground transition-colors">Services</a></li>
-              <li><a href="#about" className="text-gray-400 hover:text-foreground transition-colors">About Us</a></li>
-              <li><a href="#contact" className="text-gray-400 hover:text-foreground transition-colors">Contact</a></li>
+              <li><Link to="/" className="text-gray-400 hover:text-foreground transition-colors">Home</Link></li>
+              <li><Link to="/vehicles" className="text-gray-400 hover:text-foreground transition-colors">Vehicles</Link></li>
+              <li><Link to="/services" className="text-gray-400 hover:text-foreground transition-colors">Services</Link></li>
+              <li><Link to="/about" className="text-gray-400 hover:text-foreground transition-colors">About Us</Link></li>
+              <li><Link to="/contact" className="text-gray-400 hover:text-foreground transition-colors">Contact</Link></li>
             </ul>
           </div>
 

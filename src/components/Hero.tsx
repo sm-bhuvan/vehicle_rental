@@ -42,7 +42,10 @@ const Hero = () => {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-          <button className="btn-primary flex items-center space-x-2 group">
+          <button 
+            className="btn-primary flex items-center space-x-2 group"
+            onClick={() => window.location.href = '/vehicles'}
+          >
             <span>Explore Vehicles</span>
             <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
           </button>
@@ -70,10 +73,25 @@ const Hero = () => {
         </div>
       </div>
 
-      {/* Scroll Indicator */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
-        <div className="w-6 h-10 border-2 border-neon-cyan rounded-full flex justify-center">
-          <div className="w-1 h-3 bg-neon-cyan rounded-full mt-2 animate-bounce"></div>
+      {/* CTA Section */}
+      <div className="relative z-10 text-center mt-16">
+        <div className="glass-card rounded-xl p-8 max-w-4xl mx-auto">
+          <h2 className="text-2xl font-semibold mb-4">Ready to Experience Luxury?</h2>
+          <p className="text-gray-400 mb-6">Browse our premium fleet and find your perfect ride today.</p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button 
+              className="btn-primary"
+              onClick={() => window.location.href = '/vehicles'}
+            >
+              View All Vehicles
+            </button>
+            <button 
+              className="btn-outline"
+              onClick={() => window.location.href = '/contact'}
+            >
+              Get Custom Quote
+            </button>
+          </div>
         </div>
       </div>
     </section>
