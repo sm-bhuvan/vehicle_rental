@@ -1,85 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Filter } from "lucide-react";
 import VehicleCard from "./VehicleCard";
 import { Vehicle } from "../types/vehicle";
-import car1 from "../assets/car1.jpg";
-import bike1 from "../assets/bike1.jpg";
-import suv1 from "../assets/suv1.jpg";
-import sports1 from "../assets/sports1.jpg";
-
-const vehicleData: Vehicle[] = [
-  {
-    id: 1,
-    name: "BMW M3 Competition",
-    type: "Luxury Sedan",
-    image: car1,
-    pricePerDay: 189,
-    rating: 4.8,
-    reviews: 124,
-    available: true,
-    features: [
-      { icon: 'users', label: '4 Seats' },
-      { icon: 'fuel', label: 'Premium' },
-      { icon: 'settings', label: 'Auto' }
-    ]
-  },
-  {
-    id: 2,
-    name: "Ducati Panigale V4",
-    type: "Sports Bike",
-    image: bike1,
-    pricePerDay: 149,
-    rating: 4.9,
-    reviews: 89,
-    available: true,
-    features: [
-      { icon: 'users', label: '2 Riders' },
-      { icon: 'fuel', label: 'Premium' },
-      { icon: 'settings', label: '6-Speed' }
-    ]
-  },
-  {
-    id: 3,
-    name: "Range Rover Vogue",
-    type: "Luxury SUV",
-    image: suv1,
-    pricePerDay: 249,
-    rating: 4.7,
-    reviews: 156,
-    available: true,
-    features: [
-      { icon: 'users', label: '7 Seats' },
-      { icon: 'fuel', label: 'Hybrid' },
-      { icon: 'settings', label: 'AWD' }
-    ]
-  },
-  {
-    id: 4,
-    name: "Ferrari 488 GTB",
-    type: "Super Car",
-    image: sports1,
-    pricePerDay: 599,
-    rating: 5.0,
-    reviews: 67,
-    available: false,
-    features: [
-      { icon: 'users', label: '2 Seats' },
-      { icon: 'fuel', label: 'Premium' },
-      { icon: 'settings', label: '7-Speed' }
-    ]
-  }
-];
+import { useVehicles } from "../contexts/VehicleContext";
 
 const VehicleGrid = () => {
-  const [filteredVehicles, setFilteredVehicles] = useState(vehicleData);
+  const { vehicles } = useVehicles();
+  const [filteredVehicles, setFilteredVehicles] = useState<Vehicle[]>([]);
   const [selectedType, setSelectedType] = useState("All");
   const [priceRange, setPriceRange] = useState([0, 1000]);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const vehicleTypes = ["All", "Luxury Sedan", "Sports Bike", "Luxury SUV", "Super Car"];
+  // Get unique vehicle types from the current vehicles
+  const vehicleTypes = ["All", ...Array.from(new Set(vehicles.map(v => v.type)))];
+
+  // Update filtered vehicles when vehicles change
+  useEffect(() => {
+    setFilteredVehicles(vehicles);
+  }, [vehicles]);
 
   const handleFilter = () => {
-    let filtered = vehicleData;
+    let filtered = vehicles;
 
     // Filter by type
     if (selectedType !== "All") {

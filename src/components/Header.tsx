@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Menu, X, Car } from "lucide-react";
+import { Menu, X, Car, Shield } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const { isAuthenticated, isAdmin, logout } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -56,9 +58,32 @@ const Header = () => {
 
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <button className="px-6 py-2 text-sm border border-primary hover:bg-primary hover:text-primary-foreground transition-all rounded-lg">
-              Login
-            </button>
+            {isAuthenticated ? (
+              <>
+                {isAdmin && (
+                  <Link 
+                    to="/admin/dashboard" 
+                    className="px-6 py-2 text-sm border border-blue-500 hover:bg-blue-500 hover:text-white transition-all rounded-lg flex items-center space-x-2"
+                  >
+                    <Shield className="h-4 w-4" />
+                    <span>Admin</span>
+                  </Link>
+                )}
+                <button 
+                  onClick={logout}
+                  className="px-6 py-2 text-sm border border-primary hover:bg-primary hover:text-primary-foreground transition-all rounded-lg"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link 
+                to="/admin/login" 
+                className="px-6 py-2 text-sm border border-primary hover:bg-primary hover:text-primary-foreground transition-all rounded-lg"
+              >
+                Login
+              </Link>
+            )}
             <Link to="/vehicles" className="btn-primary">
               Book Now
             </Link>
@@ -114,9 +139,34 @@ const Header = () => {
               </Link>
             </nav>
             <div className="flex flex-col space-y-2 mt-4">
-              <button className="px-6 py-2 text-sm border border-primary hover:bg-primary hover:text-primary-foreground transition-all rounded-lg">
-                Login
-              </button>
+              {isAuthenticated ? (
+                <>
+                  {isAdmin && (
+                    <Link 
+                      to="/admin/dashboard" 
+                      className="px-6 py-2 text-sm border border-blue-500 hover:bg-blue-500 hover:text-white transition-all rounded-lg flex items-center justify-center space-x-2"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <Shield className="h-4 w-4" />
+                      <span>Admin</span>
+                    </Link>
+                  )}
+                  <button 
+                    onClick={() => { logout(); setIsMenuOpen(false); }}
+                    className="px-6 py-2 text-sm border border-primary hover:bg-primary hover:text-primary-foreground transition-all rounded-lg"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <Link 
+                  to="/admin/login" 
+                  className="px-6 py-2 text-sm border border-primary hover:bg-primary hover:text-primary-foreground transition-all rounded-lg"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Login
+                </Link>
+              )}
               <Link to="/vehicles" className="btn-primary text-center" onClick={() => setIsMenuOpen(false)}>
                 Book Now
               </Link>
