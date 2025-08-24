@@ -122,3 +122,4 @@ src/
 ## Support
 
 For technical support or feature requests, please refer to the main project documentation or contact the development team.
+
