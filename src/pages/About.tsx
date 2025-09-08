@@ -1,3 +1,6 @@
+//import { Footer } from "react-day-picker";
+import Footer from "../components/Footer";
+
 import Testimonials from "../components/Testimonials";
 import { Award, Shield, Users, Clock } from "lucide-react";
 
@@ -102,6 +105,7 @@ const About = () => {
       </section>
 
       <Testimonials />
+      <Footer/>
     </main>
   );
 };

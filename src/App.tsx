@@ -31,7 +31,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <div className="min-h-screen bg-background">
-              <Header />
+              <Header/>
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/vehicles" element={<Vehicles />} />
@@ -69,7 +69,6 @@ const App = () => (
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
-              <Footer />
               <ChatBot />
             </div>
           </BrowserRouter>

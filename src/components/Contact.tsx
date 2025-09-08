@@ -1,5 +1,5 @@
 import { Phone, Mail, MapPin, Clock, Send } from "lucide-react";
-
+import MyDatePicker from "./date";
 const Contact = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -143,6 +143,11 @@ const Contact = () => {
                   <option>Motorcycle</option>
                   <option>Van/Commercial</option>
                 </select>
+              </div>
+
+              <div>
+                <MyDatePicker/>
+                <MyDatePicker/>
               </div>
 
               <div>
