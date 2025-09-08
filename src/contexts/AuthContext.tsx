@@ -1,54 +1,144 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import ApiService from '../services/api';
+import type { BackendUser, RegisterData } from '../types/backend';
 
-interface User {
-  id: string;
-  username: string;
-  role: 'admin' | 'user';
+// Updated User interface to match Flask backend
+interface User extends BackendUser {
+  // Keep username for backward compatibility with existing components
+  username?: string;
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (username: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  loading: boolean;
+  register: (userData: RegisterData) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Simple admin credentials (in production, this should be handled securely)
+// Keep admin credentials as fallback for development
 const ADMIN_CREDENTIALS = {
-  username: 'admin',
+  email: 'admin@gmail.com',
   password: 'admin123',
   role: 'admin' as const
 };
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(() => {
-    const savedUser = localStorage.getItem('user');
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const login = async (username: string, password: string): Promise<boolean> => {
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+  useEffect(() => {
+    checkAuthStatus();
     
-    if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-      const userData: User = {
-        id: '1',
-        username: ADMIN_CREDENTIALS.username,
-        role: ADMIN_CREDENTIALS.role
-      };
-      setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
-      return true;
+    // Listen for logout events from API service
+    const handleLogout = () => {
+      setUser(null);
+    };
+    
+    window.addEventListener('auth:logout', handleLogout);
+    return () => window.removeEventListener('auth:logout', handleLogout);
+  }, []);
+
+  const checkAuthStatus = async () => {
+    const token = ApiService.getToken();
+    
+    if (token) {
+      try {
+        const response = await ApiService.getProfile();
+        // Add username for backward compatibility
+        const userData: User = {
+          ...response.user,
+          username: response.user.email // Use email as username for existing components
+        };
+        setUser(userData);
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        ApiService.removeToken();
+        setUser(null);
+      }
     }
-    return false;
+    
+    setLoading(false);
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
+  const login = async (emailOrUsername: string, password: string): Promise<boolean> => {
+    try {
+      // First try Flask backend
+      const response = await ApiService.login(emailOrUsername, password);
+      
+      if (response.access_token) {
+        // Add username for backward compatibility
+        const userData: User = {
+          ...response.user,
+          username: response.user.email
+        };
+        setUser(userData);
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Backend login failed, trying fallback:', error);
+      
+      // Fallback to hardcoded admin (for development)
+      if (emailOrUsername === ADMIN_CREDENTIALS.email && password === ADMIN_CREDENTIALS.password) {
+        const currentTime = new Date().toISOString();
+        const userData: User = {
+          id: '1',
+          email: ADMIN_CREDENTIALS.email,
+          first_name: 'Admin',
+          last_name: 'User',
+          username: ADMIN_CREDENTIALS.email,
+          role: ADMIN_CREDENTIALS.role,
+          is_verified: true,
+          is_active: true,
+          created_at: currentTime,  // Add missing properties
+          updated_at: currentTime   // Add missing properties
+        };
+        setUser(userData);
+        // Store in localStorage for compatibility
+        localStorage.setItem('user', JSON.stringify(userData));
+        return true;
+      }
+      
+      return false;
+    }
+  };
+
+  const register = async (userData: RegisterData): Promise<boolean> => {
+    try {
+      const response = await ApiService.register(userData);
+      
+      if (response.access_token) {
+        // Add username for backward compatibility
+        const userDataWithUsername: User = {
+          ...response.user,
+          username: response.user.email
+        };
+        setUser(userDataWithUsername);
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Registration failed:', error);
+      return false;
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await ApiService.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      setUser(null);
+      localStorage.removeItem('user'); // Clean up old storage
+    }
   };
 
   const isAuthenticated = !!user;
@@ -60,7 +150,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       login,
       logout,
       isAuthenticated,
-      isAdmin
+      isAdmin,
+      loading,
+      register
     }}>
       {children}
     </AuthContext.Provider>
@@ -74,4 +166,3 @@ export const useAuth = () => {
   }
   return context;
 };
-

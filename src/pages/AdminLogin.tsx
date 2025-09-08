@@ -5,10 +5,10 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Alert, AlertDescription } from '../components/ui/alert';
-import { Loader2, Shield, Car } from 'lucide-react';
+import { Loader2, Shield } from 'lucide-react';
 
 const AdminLogin = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -25,7 +25,7 @@ const AdminLogin = () => {
     setError('');
 
     try {
-      const success = await login(username, password);
+      const success = await login(email, password);
       if (success) {
         navigate(from, { replace: true });
       } else {
@@ -40,20 +40,12 @@ const AdminLogin = () => {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      
       <div className="w-full max-w-md">
-        {/* Logo and Title */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4">
-            <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-3 rounded-full mr-3">
-              <Car className="h-8 w-8 text-white" />
-            </div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              Rental Glow
-            </h1>
-          </div>
           <p className="text-gray-400">Admin Portal</p>
         </div>
-
+        
         {/* Login Card */}
         <Card className="glass-card border-0 shadow-2xl">
           <CardHeader className="text-center pb-4">
@@ -74,25 +66,25 @@ const AdminLogin = () => {
                 </Alert>
               )}
               
-                             <div className="space-y-2">
-                 <label htmlFor="username" className="text-sm font-medium text-foreground">
-                   Username
-                 </label>
+              <div className="space-y-2">
+                <label htmlFor="email" className="text-sm font-medium text-foreground">
+                  Email
+                </label>
                 <Input
-                  id="username"
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Enter username"
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter email"
                   className="bg-input border-border focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
               
-                             <div className="space-y-2">
-                 <label htmlFor="password" className="text-sm font-medium text-foreground">
-                   Password
-                 </label>
+              <div className="space-y-2">
+                <label htmlFor="password" className="text-sm font-medium text-foreground">
+                  Password
+                </label>
                 <Input
                   id="password"
                   type="password"
@@ -122,7 +114,7 @@ const AdminLogin = () => {
             
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-400">
-                Demo Credentials: admin / admin123
+                Demo Credentials: admin@gmail.com / admin123
               </p>
             </div>
           </CardContent>
