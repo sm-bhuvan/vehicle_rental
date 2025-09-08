@@ -1,10 +1,16 @@
 import { Phone, Mail, MapPin, Clock, Send } from "lucide-react";
 import MyDatePicker from "./date";
+import { useState } from "react";
+import ScheduleCall from "./CallSchedule";
+
 const Contact = () => {
-  const handleSubmit = (e) => {
+  const [pickupDate, setPickupDate] = useState<Date | null>(null);
+  const [returnDate, setReturnDate] = useState<Date | null>(null);
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission here
-    console.log("Form submitted");
+    console.log("Pickup:", pickupDate);
+    console.log("Return:", returnDate);
   };
 
   return (
@@ -26,17 +32,15 @@ const Contact = () => {
           <div className="space-y-8">
             <div className="glass-card rounded-xl p-8">
               <h3 className="text-2xl font-bold mb-6 text-neon">Contact Information</h3>
-              
               <div className="space-y-6">
                 <div className="flex items-start space-x-4">
                   <Phone className="h-6 w-6 text-neon mt-1" />
                   <div>
                     <h4 className="font-semibold mb-1">Phone</h4>
-                    <p className="text-gray-400">+1 (555) 123-4567</p>
-                    <p className="text-gray-400">+1 (555) 987-6543</p>
+                    <p className="text-gray-400">+91 94433 18232</p>
+                    <p className="text-gray-400">+91 89037 35645</p>
                   </div>
                 </div>
-
                 <div className="flex items-start space-x-4">
                   <Mail className="h-6 w-6 text-neon mt-1" />
                   <div>
@@ -45,7 +49,6 @@ const Contact = () => {
                     <p className="text-gray-400">support@luxedrive.com</p>
                   </div>
                 </div>
-
                 <div className="flex items-start space-x-4">
                   <MapPin className="h-6 w-6 text-neon mt-1" />
                   <div>
@@ -57,7 +60,6 @@ const Contact = () => {
                     </p>
                   </div>
                 </div>
-
                 <div className="flex items-start space-x-4">
                   <Clock className="h-6 w-6 text-neon mt-1" />
                   <div>
@@ -78,8 +80,8 @@ const Contact = () => {
                 <button className="btn-primary w-full justify-center">
                   Book Now - Instant Quote
                 </button>
-                <button className="btn-outline w-full justify-center">
-                  Schedule a Call
+                <button className="btn-outline w-full flex items-center justify-center">
+                  <ScheduleCall />
                 </button>
                 <button className="btn-outline w-full justify-center">
                   Live Chat Support
@@ -93,13 +95,15 @@ const Contact = () => {
             <h3 className="text-2xl font-bold mb-6 text-neon">Send us a Message</h3>
             
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Names */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium mb-2">First Name</label>
                   <input
                     type="text"
                     required
-                    className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full px-4 py-3 bg-input border border-border rounded-lg 
+                               focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="John"
                   />
                 </div>
@@ -108,34 +112,41 @@ const Contact = () => {
                   <input
                     type="text"
                     required
-                    className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full px-4 py-3 bg-input border border-border rounded-lg 
+                               focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="Doe"
                   />
                 </div>
               </div>
 
+              {/* Email */}
               <div>
                 <label className="block text-sm font-medium mb-2">Email</label>
                 <input
                   type="email"
                   required
-                  className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-4 py-3 bg-input border border-border rounded-lg 
+                             focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="john@example.com"
                 />
               </div>
 
+              {/* Phone */}
               <div>
                 <label className="block text-sm font-medium mb-2">Phone</label>
                 <input
                   type="tel"
-                  className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-4 py-3 bg-input border border-border rounded-lg 
+                             focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="+1 (555) 123-4567"
                 />
               </div>
 
+              {/* Vehicle Type */}
               <div>
                 <label className="block text-sm font-medium mb-2">Vehicle Interest</label>
-                <select className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                <select className="w-full px-4 py-3 bg-input border border-border rounded-lg 
+                                   focus:outline-none focus:ring-2 focus:ring-primary">
                   <option>Select vehicle type</option>
                   <option>Luxury Sedan</option>
                   <option>Sports Car</option>
@@ -145,21 +156,37 @@ const Contact = () => {
                 </select>
               </div>
 
-              <div>
-                <MyDatePicker/>
-                <MyDatePicker/>
+              {/* Pickup & Return Dates */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Pickup Date</label>
+                  <MyDatePicker
+                    selectedDate={pickupDate}
+                    setSelectedDate={setPickupDate}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Return Date</label>
+                  <MyDatePicker
+                    selectedDate={returnDate}
+                    setSelectedDate={setReturnDate}
+                  />
+                </div>
               </div>
 
+              {/* Message */}
               <div>
                 <label className="block text-sm font-medium mb-2">Message</label>
                 <textarea
                   rows={4}
                   required
-                  className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                  className="w-full px-4 py-3 bg-input border border-border rounded-lg 
+                             focus:outline-none focus:ring-2 focus:ring-primary resize-none"
                   placeholder="Tell us about your rental needs, budget, and any special requirements..."
                 ></textarea>
               </div>
 
+              {/* Submit */}
               <button
                 type="submit"
                 className="btn-primary w-full flex items-center justify-center space-x-2"

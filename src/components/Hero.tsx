@@ -50,10 +50,7 @@ const Hero = () => {
             <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
           </button>
           
-          <button className="btn-outline flex items-center space-x-2">
-            <Play className="h-5 w-5" />
-            <span>Watch Demo</span>
-          </button>
+          
         </div>
 
         {/* Stats */}
@@ -73,27 +70,7 @@ const Hero = () => {
         </div>
       </div>
 
-      {/* CTA Section */}
-      <div className="relative z-10 text-center mt-16">
-        <div className="glass-card rounded-xl p-8 max-w-4xl mx-auto">
-          <h2 className="text-2xl font-semibold mb-4">Ready to Experience Luxury?</h2>
-          <p className="text-gray-400 mb-6">Browse our premium fleet and find your perfect ride today.</p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button 
-              className="btn-primary"
-              onClick={() => window.location.href = '/vehicles'}
-            >
-              View All Vehicles
-            </button>
-            <button 
-              className="btn-outline"
-              onClick={() => window.location.href = '/contact'}
-            >
-              Get Custom Quote
-            </button>
-          </div>
-        </div>
-      </div>
+      
     </section>
   );
 };
