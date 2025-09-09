@@ -1,4 +1,5 @@
 import { Star, Users, Fuel, Settings } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Vehicle } from "../types/vehicle";
 
 interface VehicleCardProps {
@@ -6,6 +7,7 @@ interface VehicleCardProps {
 }
 
 const VehicleCard = ({ vehicle }: VehicleCardProps) => {
+  const navigate = useNavigate();
   const {
     id,
     name,
@@ -65,7 +67,7 @@ const VehicleCard = ({ vehicle }: VehicleCardProps) => {
         {/* Price and Action */}
         <div className="flex items-center justify-between pt-4 border-t border-border/20">
           <div>
-            <span className="text-2xl font-bold text-neon">${pricePerDay}</span>
+            <span className="text-2xl font-bold text-neon">₹{pricePerDay}</span>
             <span className="text-gray-400">/day</span>
           </div>
           
@@ -76,7 +78,10 @@ const VehicleCard = ({ vehicle }: VehicleCardProps) => {
                 : 'bg-gray-600 text-gray-400 cursor-not-allowed'
             }`}
             disabled={!available}
-            onClick={() => available && (window.location.href = '/contact')}
+            onClick={() => {
+              if (!available) return;
+              navigate('/contact', { state: { vehicleId: id, vehicleName: name } });
+            }}
           >
             {available ? 'Book Now' : 'Unavailable'}
           </button>

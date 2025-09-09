@@ -8,7 +8,7 @@ const VehicleGrid = () => {
   const { vehicles } = useVehicles();
   const [filteredVehicles, setFilteredVehicles] = useState<Vehicle[]>([]);
   const [selectedType, setSelectedType] = useState("All");
-  const [priceRange, setPriceRange] = useState([0, 1000]);
+  const [priceRange, setPriceRange] = useState([0, 10000]);
   const [searchTerm, setSearchTerm] = useState("");
 
   // Get unique vehicle types from the current vehicles
@@ -94,12 +94,12 @@ const VehicleGrid = () => {
               <input
                 type="range"
                 min="0"
-                max="1000"
+                max="10000"
                 value={priceRange[1]}
                 onChange={(e) => setPriceRange([0, parseInt(e.target.value)])}
                 className="w-32"
               />
-              <span className="text-sm text-neon">${priceRange[1]}/day</span>
+              <span className="text-sm text-neon">₹{priceRange[1]}/day</span>
             </div>
 
             <button

@@ -1,0 +1,45 @@
+[
+  {
+    "make": "Tesla",
+    "model": "Model 3",
+    "year": 2022,
+    "type": "car",
+    "registration_number": "ABC1234",
+    "location": "San Francisco",
+    "description": "Electric sedan with Autopilot",
+    "pricePerDay": 120,
+    "pricePerHour": 20,
+    "images": ["/uploads/sample/tesla-model3.jpg"],
+    "specifications": {
+      "engine": "Electric",
+      "transmission": "Automatic",
+      "fuelType": "electric",
+      "seatingCapacity": 5,
+      "color": "White"
+    },
+    "isAvailable": true,
+    "isActive": true
+  },
+  {
+    "make": "Yamaha",
+    "model": "MT-07",
+    "year": 2021,
+    "type": "motorcycle",
+    "registration_number": "XYZ5678",
+    "location": "Los Angeles",
+    "description": "Naked bike, great for city rides",
+    "pricePerDay": 60,
+    "pricePerHour": 12,
+    "images": ["/uploads/sample/yamaha-mt07.jpg"],
+    "specifications": {
+      "engine": "689cc",
+      "transmission": "Manual",
+      "fuelType": "petrol",
+      "seatingCapacity": 2,
+      "color": "Blue"
+    },
+    "isAvailable": true,
+    "isActive": true
+  }
+]
+

@@ -1,16 +1,52 @@
 import { Phone, Mail, MapPin, Clock, Send } from "lucide-react";
 import MyDatePicker from "./date";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import ScheduleCall from "./CallSchedule";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useVehicles } from "../contexts/VehicleContext";
 
 const Contact = () => {
   const [pickupDate, setPickupDate] = useState<Date | null>(null);
   const [returnDate, setReturnDate] = useState<Date | null>(null);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { updateVehicle } = useVehicles();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const { vehicleName, vehicleId } = useMemo(() => ({
+    vehicleName: (location.state as any)?.vehicleName as string | undefined,
+    vehicleId: (location.state as any)?.vehicleId as number | undefined,
+  }), [location.state]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Pickup:", pickupDate);
-    console.log("Return:", returnDate);
+    try {
+      let sameDay = false;
+      if (pickupDate) {
+        const today = new Date();
+        sameDay = pickupDate.getFullYear() === today.getFullYear() &&
+          pickupDate.getMonth() === today.getMonth() &&
+          pickupDate.getDate() === today.getDate();
+      }
+
+      if (vehicleName && sameDay) {
+        // Call backend to mark vehicle unavailable for same-day booking
+        await fetch('/api/vehicles/book-by-name', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: vehicleName, startDate: pickupDate?.toISOString() })
+        });
+      }
+
+      // Update local state immediately for better UX
+      if (sameDay && vehicleId) {
+        updateVehicle(vehicleId, { available: false });
+      }
+
+      alert('Booking successful');
+      navigate('/vehicles');
+    } catch (_err) {
+      alert('Booking failed. Please try again.');
+    }
   };
 
   return (
@@ -80,9 +116,9 @@ const Contact = () => {
                 <button className="btn-primary w-full justify-center">
                   Book Now - Instant Quote
                 </button>
-                <button className="btn-outline w-full flex items-center justify-center">
+                <div className="btn-outline w-full flex items-center justify-center">
                   <ScheduleCall />
-                </button>
+                </div>
                 <button className="btn-outline w-full justify-center">
                   Live Chat Support
                 </button>
@@ -142,18 +178,16 @@ const Contact = () => {
                 />
               </div>
 
-              {/* Vehicle Type */}
+              {/* Vehicle Interest (prefilled) */}
               <div>
-                <label className="block text-sm font-medium mb-2">Vehicle Interest</label>
-                <select className="w-full px-4 py-3 bg-input border border-border rounded-lg 
-                                   focus:outline-none focus:ring-2 focus:ring-primary">
-                  <option>Select vehicle type</option>
-                  <option>Luxury Sedan</option>
-                  <option>Sports Car</option>
-                  <option>SUV</option>
-                  <option>Motorcycle</option>
-                  <option>Van/Commercial</option>
-                </select>
+                <label className="block text-sm font-medium mb-2">Vehicle</label>
+                <input
+                  type="text"
+                  readOnly
+                  value={vehicleName || ''}
+                  placeholder="Select from vehicles page"
+                  className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                />
               </div>
 
               {/* Pickup & Return Dates */}
