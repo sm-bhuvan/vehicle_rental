@@ -40,8 +40,8 @@ const ChatBot = () => {
   const getBotResponse = (userInput: string): string => {
     const input = userInput.toLowerCase();
     
-    if (input.includes('budget') || input.includes('$') || input.includes('price')) {
-      return "Great! Based on your budget, I can recommend some excellent options. For budgets under $100/day, I'd suggest our economy cars. For $100-200/day, our premium sedans are perfect. Above $200/day, you can enjoy our luxury sports cars and SUVs!";
+    if (input.includes('budget') || input.includes('₹') || input.includes('price')) {
+      return "Great! Based on your budget, I can recommend some excellent options. For budgets under ₹5000/day, I'd suggest our economy cars. For ₹2000-4000/day, our premium sedans are perfect. Above ₹7000/day, you can enjoy our luxury cars and SUVs!";
     }
     
     if (input.includes('day') || input.includes('week') || input.includes('month')) {
@@ -53,7 +53,7 @@ const ChatBot = () => {
     }
     
     if (input.includes('bike') || input.includes('motorcycle')) {
-      return "Our motorcycle collection includes sport bikes, cruisers, and touring bikes. Prices start from $50/day. What type of riding experience are you looking for?";
+      return "Our motorcycle collection includes sport bikes, cruisers, and touring bikes. Prices start from ₹2000/day. What type of riding experience are you looking for?";
     }
     
     return "That's interesting! Could you tell me more about your budget range and how many days you need the vehicle? This will help me recommend the best options for you.";
