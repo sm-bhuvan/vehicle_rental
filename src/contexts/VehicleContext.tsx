@@ -1,9 +1,5 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { Vehicle } from '../types/vehicle';
-import car1 from '../assets/car1.jpg';
-import bike1 from '../assets/bike1.jpg';
-import suv1 from '../assets/suv1.jpg';
-import sports1 from '../assets/sports1.jpg';
 
 interface VehicleContextType {
   vehicles: Vehicle[];
@@ -15,71 +11,98 @@ interface VehicleContextType {
 
 const VehicleContext = createContext<VehicleContextType | undefined>(undefined);
 
-const initialVehicles: Vehicle[] = [
-  {
-    id: 1,
-    name: "BMW M3 Competition",
-    type: "Luxury Sedan",
-    image: car1,
-    pricePerDay: 189,
-    rating: 4.8,
-    reviews: 124,
-    available: true,
-    features: [
-      { icon: 'users', label: '4 Seats' },
-      { icon: 'fuel', label: 'Premium' },
-      { icon: 'settings', label: 'Auto' }
-    ]
-  },
-  {
-    id: 2,
-    name: "Ducati Panigale V4",
-    type: "Sports Bike",
-    image: bike1,
-    pricePerDay: 149,
-    rating: 4.9,
-    reviews: 89,
-    available: true,
-    features: [
-      { icon: 'users', label: '2 Riders' },
-      { icon: 'fuel', label: 'Premium' },
-      { icon: 'settings', label: '6-Speed' }
-    ]
-  },
-  {
-    id: 3,
-    name: "Range Rover Vogue",
-    type: "Luxury SUV",
-    image: suv1,
-    pricePerDay: 249,
-    rating: 4.7,
-    reviews: 156,
-    available: true,
-    features: [
-      { icon: 'users', label: '7 Seats' },
-      { icon: 'fuel', label: 'Hybrid' },
-      { icon: 'settings', label: 'AWD' }
-    ]
-  },
-  {
-    id: 4,
-    name: "Ferrari 488 GTB",
-    type: "Super Car",
-    image: sports1,
-    pricePerDay: 599,
-    rating: 5.0,
-    reviews: 67,
-    available: false,
-    features: [
-      { icon: 'users', label: '2 Seats' },
-      { icon: 'fuel', label: 'Premium' },
-      { icon: 'settings', label: '7-Speed' }
-    ]
-  }
-];
+// Derive backend base origin from Vite env (expects VITE_API_URL like http://host:port/api)
+const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:5000/api';
+const API_ORIGIN = API_BASE_URL.replace(/\/?api\/?$/, '');
 
 export const VehicleProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [vehicles, setVehicles] = useState<Vehicle[]>(initialVehicles);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+
+  useEffect(() => {
+    const fetchVehicles = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/vehicles`);
+        const json = await response.json();
+
+        if (json && json.success && json.data && Array.isArray(json.data.vehicles)) {
+          const mapped: Vehicle[] = json.data.vehicles.map((v: any, index: number) => {
+            // Prefer your DB schema fields when present
+            const hasCustomSchema = typeof v.name === 'string' || typeof v.price_per_day === 'number';
+
+            if (hasCustomSchema) {
+              const rawImage = v.image_url || (Array.isArray(v.images) ? v.images[0] : undefined);
+              const imageUrl = rawImage
+                ? (String(rawImage).startsWith('http') ? rawImage : `${API_ORIGIN}${rawImage}`)
+                : '/placeholder-car.jpg';
+
+              return {
+                id: index + 1,
+                name: v.name || `${v.brand ?? ''}`.trim() || 'Vehicle',
+                type: v.brand || v.type || 'car',
+                image: imageUrl,
+                pricePerDay: v.price_per_day ?? v.pricePerDay ?? 0,
+                rating: typeof v.rating === 'number' ? v.rating : 4.5,
+                reviews: typeof v.reviews === 'number' ? v.reviews : 0,
+                available: typeof v.availability === 'boolean' ? v.availability : (typeof v.isAvailable === 'boolean' ? v.isAvailable : true),
+                features: [
+                  { icon: 'users', label: `${v.seats ?? v.specifications?.seatingCapacity ?? 4} seats` },
+                  { icon: 'fuel', label: v.fuel_type ?? v.specifications?.fuelType ?? 'Petrol' },
+                  { icon: 'settings', label: v.gear ?? v.specifications?.transmission ?? 'Automatic' }
+                ]
+              } as Vehicle;
+            }
+
+            // Fallback to original demo schema mapping
+            const imagePath: string | undefined = Array.isArray(v.images) && v.images.length > 0 ? v.images[0] : undefined;
+            const imageUrl = imagePath
+              ? (imagePath.startsWith('http') ? imagePath : `${API_ORIGIN}${imagePath}`)
+              : '/placeholder-car.jpg';
+
+            return {
+              id: typeof v.id === 'number' ? v.id : (typeof v._id === 'string' ? index + 1 : index + 1),
+              name: `${v.year ?? ''} ${v.make ?? ''} ${v.model ?? ''}`.trim(),
+              type: v.type ?? 'car',
+              image: imageUrl,
+              pricePerDay: v.pricePerDay ?? 0,
+              rating: typeof v.averageRating === 'number' ? v.averageRating : 4.5,
+              reviews: typeof v.totalReviews === 'number' ? v.totalReviews : 0,
+              available: typeof v.isAvailable === 'boolean' ? v.isAvailable : true,
+              features: [
+                { icon: 'users', label: `${v.specifications?.seatingCapacity ?? 4} seats` },
+                { icon: 'fuel', label: v.specifications?.fuelType ?? 'Petrol' },
+                { icon: 'settings', label: v.specifications?.transmission ?? 'Automatic' }
+              ]
+            } as Vehicle;
+          });
+          setVehicles(mapped);
+        } else if (Array.isArray(json?.vehicles)) {
+          // Fallback for alternate response shape
+          const mapped: Vehicle[] = json.vehicles.map((v: any, index: number) => ({
+            id: index + 1,
+            name: `${v.year ?? ''} ${v.make ?? ''} ${v.model ?? ''}`.trim(),
+            type: v.type ?? 'car',
+            image: v.images?.[0] ? (v.images[0].startsWith('http') ? v.images[0] : `${API_ORIGIN}${v.images[0]}`) : '/placeholder-car.jpg',
+            pricePerDay: v.pricePerDay ?? 0,
+            rating: v.averageRating ?? 4.5,
+            reviews: v.totalReviews ?? 0,
+            available: v.isAvailable ?? true,
+            features: [
+              { icon: 'users', label: `${v.specifications?.seatingCapacity ?? 4} seats` },
+              { icon: 'fuel', label: v.specifications?.fuelType ?? 'Petrol' },
+              { icon: 'settings', label: v.specifications?.transmission ?? 'Automatic' }
+            ]
+          }));
+          setVehicles(mapped);
+        } else {
+          setVehicles([]);
+        }
+      } catch (_err) {
+        setVehicles([]);
+      }
+    };
+
+    fetchVehicles();
+  }, []);
 
   const addVehicle = (vehicle: Omit<Vehicle, 'id'>) => {
     const newVehicle: Vehicle = {

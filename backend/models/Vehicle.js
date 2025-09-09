@@ -6,6 +6,7 @@ const vehicleSchema = new mongoose.Schema({
     model: { type: String, required: true },
     year: { type: Number, required: true },
     type: { type: String, enum: ['car', 'truck', 'van', 'motorcycle', 'suv'], required: true },
+    registration_number: { type: String, unique: true, required: true },
     location: { type: String, required: true },
     description: { type: String, required: true },
     pricePerDay: { type: Number, required: true },

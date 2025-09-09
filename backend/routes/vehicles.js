@@ -42,13 +42,13 @@ router.get('/', [
       sortOrder = 'desc'
     } = req.query;
 
-    // Build filter object
-    const filter = { isActive: true };
+    // Build filter object (include docs missing isActive for legacy data)
+    const filter = { $or: [{ isActive: true }, { isActive: { $exists: false } }] };
 
     if (type) filter.type = type;
     if (category) filter.category = new RegExp(category, 'i');
-    if (city) filter['location.city'] = new RegExp(city, 'i');
-    if (available !== undefined) filter.availability = available;
+    if (city) filter['location'] = new RegExp(city, 'i');
+    if (available !== undefined) filter.isAvailable = available;
 
     // Price range filter
     if (minPrice || maxPrice) {
@@ -103,6 +103,43 @@ router.get('/', [
       success: false,
       message: 'Server error while fetching vehicles'
     });
+  }
+});
+
+// Simple booking endpoint by vehicle name to mark availability for same-day pickup
+router.post('/book-by-name', async (req, res) => {
+  try {
+    const { name, startDate } = req.body || {};
+    if (!name) {
+      return res.status(400).json({ success: false, message: 'Vehicle name is required' });
+    }
+
+    const vehicle = await Vehicle.findOne({ $and: [
+      { $or: [{ isActive: true }, { isActive: { $exists: false } }] },
+      { name }
+    ] });
+
+    if (!vehicle) {
+      return res.status(404).json({ success: false, message: 'Vehicle not found' });
+    }
+
+    if (startDate) {
+      const start = new Date(startDate);
+      const today = new Date();
+      const isSameDay = start.getFullYear() === today.getFullYear() &&
+        start.getMonth() === today.getMonth() &&
+        start.getDate() === today.getDate();
+
+      if (isSameDay) {
+        vehicle.isAvailable = false;
+        await vehicle.save();
+      }
+    }
+
+    return res.json({ success: true, data: { vehicle } });
+  } catch (error) {
+    console.error('Book by name error:', error);
+    return res.status(500).json({ success: false, message: 'Server error while booking vehicle' });
   }
 });
 
