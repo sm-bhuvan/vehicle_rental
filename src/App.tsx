@@ -19,6 +19,7 @@ import EditVehicle from "./pages/EditVehicle";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./contexts/AuthContext";
 import { VehicleProvider } from "./contexts/VehicleContext";
+import Payment from "./pages/Payment";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ const App = () => (
                 <Route path="/about" element={<About />} />
                 <Route path="/services" element={<Services />} />
                 <Route path="/contact" element={<ContactPage />} />
+                <Route path="/payment" element={<Payment/>} />
                 
                 {/* Admin Routes */}
                 <Route path="/admin/login" element={<AdminLogin />} />

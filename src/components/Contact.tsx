@@ -226,7 +226,7 @@ const Contact = () => {
                 className="btn-primary w-full flex items-center justify-center space-x-2"
               >
                 <Send className="h-5 w-5" />
-                <span>Send Message</span>
+                <span>Proceed to Payment</span>
               </button>
             </form>
           </div>
