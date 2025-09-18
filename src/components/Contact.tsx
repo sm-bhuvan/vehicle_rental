@@ -8,6 +8,14 @@ import { useVehicles } from "../contexts/VehicleContext";
 const Contact = () => {
   const [pickupDate, setPickupDate] = useState<Date | null>(null);
   const [returnDate, setReturnDate] = useState<Date | null>(null);
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    message: ''
+  });
+  
   const location = useLocation();
   const navigate = useNavigate();
   const { updateVehicle } = useVehicles();
@@ -17,8 +25,42 @@ const Contact = () => {
     vehicleId: (location.state as any)?.vehicleId as number | undefined,
   }), [location.state]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const validateForm = () => {
+    const { firstName, lastName, email, message } = formData;
+    
+    if (!firstName.trim() || !lastName.trim() || !email.trim() || !message.trim()) {
+      alert('Please fill in all required fields');
+      return false;
+    }
+    
+    if (!pickupDate || !returnDate) {
+      alert('Please select both pickup and return dates');
+      return false;
+    }
+    
+    if (pickupDate >= returnDate) {
+      alert('Return date must be after pickup date');
+      return false;
+    }
+    
+    return true;
+  };
+
+  const handleProceedToPayment = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
     try {
       let sameDay = false;
       if (pickupDate) {
@@ -42,10 +84,20 @@ const Contact = () => {
         updateVehicle(vehicleId, { available: false });
       }
 
-      alert('Booking successful');
-      navigate('/vehicles');
+      // Navigate to payment page with booking details
+      navigate('/payment', {
+        state: {
+          bookingDetails: {
+            ...formData,
+            vehicleName,
+            vehicleId,
+            pickupDate: pickupDate?.toISOString(),
+            returnDate: returnDate?.toISOString(),
+          }
+        }
+      });
     } catch (_err) {
-      alert('Booking failed. Please try again.');
+      alert('Failed to process booking. Please try again.');
     }
   };
 
@@ -130,13 +182,16 @@ const Contact = () => {
           <div className="glass-card rounded-xl p-8">
             <h3 className="text-2xl font-bold mb-6 text-neon">Send us a Message</h3>
             
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleProceedToPayment} className="space-y-6">
               {/* Names */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium mb-2">First Name</label>
                   <input
                     type="text"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleInputChange}
                     required
                     className="w-full px-4 py-3 bg-input border border-border rounded-lg 
                                focus:outline-none focus:ring-2 focus:ring-primary"
@@ -147,6 +202,9 @@ const Contact = () => {
                   <label className="block text-sm font-medium mb-2">Last Name</label>
                   <input
                     type="text"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleInputChange}
                     required
                     className="w-full px-4 py-3 bg-input border border-border rounded-lg 
                                focus:outline-none focus:ring-2 focus:ring-primary"
@@ -160,6 +218,9 @@ const Contact = () => {
                 <label className="block text-sm font-medium mb-2">Email</label>
                 <input
                   type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
                   required
                   className="w-full px-4 py-3 bg-input border border-border rounded-lg 
                              focus:outline-none focus:ring-2 focus:ring-primary"
@@ -172,6 +233,9 @@ const Contact = () => {
                 <label className="block text-sm font-medium mb-2">Phone</label>
                 <input
                   type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleInputChange}
                   className="w-full px-4 py-3 bg-input border border-border rounded-lg 
                              focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="+1 (555) 123-4567"
@@ -212,6 +276,9 @@ const Contact = () => {
               <div>
                 <label className="block text-sm font-medium mb-2">Message</label>
                 <textarea
+                  name="message"
+                  value={formData.message}
+                  onChange={handleInputChange}
                   rows={4}
                   required
                   className="w-full px-4 py-3 bg-input border border-border rounded-lg 
