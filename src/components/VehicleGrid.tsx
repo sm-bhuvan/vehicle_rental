@@ -28,8 +28,10 @@ const VehicleGrid = () => {
     }
 
     // Filter by price range
-    filtered = filtered.filter(vehicle => 
-      vehicle.pricePerDay >= priceRange[0] && vehicle.pricePerDay <= priceRange[1]
+    filtered = filtered.filter(
+      vehicle =>
+        vehicle.pricePerDay >= priceRange[0] &&
+        vehicle.pricePerDay <= priceRange[1]
     );
 
     // Filter by search term
@@ -51,16 +53,16 @@ const VehicleGrid = () => {
             Our <span className="text-neon">Premium</span> Fleet
           </h2>
           <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-            Choose from our exclusive collection of luxury vehicles, 
-            each maintained to the highest standards for your perfect journey.
+            Choose from our exclusive collection of luxury vehicles, each
+            maintained to the highest standards for your perfect journey.
           </p>
         </div>
 
         {/* Search and Filters */}
         <div className="glass-card rounded-xl p-6 mb-12">
-          <div className="flex flex-col lg:flex-row gap-6 items-center">
+          <div className="flex flex-wrap gap-6 items-center">
             {/* Search */}
-            <div className="flex-1 relative">
+            <div className="flex-grow min-w-[250px] relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="text"
@@ -72,15 +74,15 @@ const VehicleGrid = () => {
             </div>
 
             {/* Type Filter */}
-            <div className="flex flex-wrap gap-2">
-              {vehicleTypes.map(type => (
+            <div className="flex flex-wrap gap-2 flex-shrink">
+              {vehicleTypes.map((type) => (
                 <button
                   key={type}
                   onClick={() => setSelectedType(type)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     selectedType === type
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-secondary hover:bg-secondary/80'
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary hover:bg-secondary/80"
                   }`}
                 >
                   {type}
@@ -89,7 +91,7 @@ const VehicleGrid = () => {
             </div>
 
             {/* Price Range */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4 flex-shrink-0">
               <span className="text-sm text-gray-400">Price:</span>
               <input
                 type="range"
@@ -102,9 +104,10 @@ const VehicleGrid = () => {
               <span className="text-sm text-neon">₹{priceRange[1]}/day</span>
             </div>
 
+            {/* Apply Filters */}
             <button
               onClick={handleFilter}
-              className="btn-primary flex items-center space-x-2"
+              className="btn-primary flex items-center space-x-2 flex-shrink-0"
             >
               <Filter className="h-4 w-4" />
               <span>Apply Filters</span>
@@ -114,7 +117,7 @@ const VehicleGrid = () => {
 
         {/* Vehicle Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {filteredVehicles.map(vehicle => (
+          {filteredVehicles.map((vehicle) => (
             <VehicleCard key={vehicle.id} vehicle={vehicle} />
           ))}
         </div>
@@ -131,9 +134,7 @@ const VehicleGrid = () => {
         {/* Load More Button */}
         {filteredVehicles.length > 0 && (
           <div className="text-center mt-12">
-            <button className="btn-outline">
-              Load More Vehicles
-            </button>
+            <button className="btn-outline">Load More Vehicles</button>
           </div>
         )}
       </div>
