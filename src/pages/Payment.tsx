@@ -1,21 +1,50 @@
 import { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
-declare global {
-  interface Window {
-    Razorpay: any;
-  }
+interface BookingDetails {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  vehicleName: string;
+  vehicleId: number;
+  pickupDate: string;
+  returnDate: string;
+  message: string;
 }
 
 const Payment = () => {
   const [file, setFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [selectedUpiApp, setSelectedUpiApp] = useState<string>("");
+  const [upiId, setUpiId] = useState<string>("");
+  const [showUpiInput, setShowUpiInput] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'completed' | 'failed'>('idle');
+  
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  const bookingDetails = location.state?.bookingDetails as BookingDetails;
 
-  // Load Razorpay script
+  // UPI apps configuration
+  const upiApps = [
+    { name: "Google Pay", id: "googlepay", icon: "🟢" },
+    { name: "PhonePe", id: "phonepe", icon: "🟣" },
+    { name: "Paytm", id: "paytm", icon: "🔵" },
+    { name: "BHIM UPI", id: "bhim", icon: "🟡" },
+    { name: "Other UPI App", id: "other", icon: "💳" }
+  ];
+
+  const merchantUpiId = "smbhuvantsi@oksbi"; // Replace with your actual UPI ID (kept private)
+  const amount = 500;
+
+  // Redirect if no booking details
   useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-    document.body.appendChild(script);
-  }, []);
+    if (!bookingDetails) {
+      alert("No booking details found. Please go back to the contact form.");
+      navigate("/contact");
+    }
+  }, [bookingDetails, navigate]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -24,38 +53,137 @@ const Payment = () => {
         alert("Please upload a PDF file only!");
         return;
       }
+      if (selectedFile.size > 5 * 1024 * 1024) { // 5MB limit
+        alert("File size should be less than 5MB!");
+        return;
+      }
       setFile(selectedFile);
     }
   };
 
-  const handlePayment = () => {
+  const generateUpiLink = () => {
+    const transactionId = `TXN${Date.now()}`;
+    const note = `Payment for ${bookingDetails.vehicleName} booking`;
+    
+    const upiParams = new URLSearchParams({
+      pa: merchantUpiId, // Payee Address (merchant UPI ID)
+      pn: "BARS Wheels", // Payee Name
+      am: amount.toString(), // Amount
+      cu: "INR", // Currency
+      tn: note, // Transaction Note
+      tr: transactionId // Transaction Reference
+    });
+
+    return `upi://pay?${upiParams.toString()}`;
+  };
+
+  const generateQRCode = (upiLink: string) => {
+    const size = 200;
+    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(upiLink)}`;
+    return qrApiUrl;
+  };
+
+  const handleUpiPayment = async () => {
     if (!file) {
       alert("Please upload your PDF first!");
       return;
     }
 
-    const options = {
-      key: "RAZORPAY_PUBLIC_KEY", // Replace with your key
-      amount: 50000, // ₹500 in paise
-      currency: "INR",
-      name: "BARS Wheels",
-      description: "Driver License Verification",
-      handler: function (response: any) {
-        alert(
-          `Payment Successful! Payment ID: ${response.razorpay_payment_id}\nFile: ${file.name}`
-        );
-      },
-      prefill: {
-        name: "John Doe",
-        email: "john@example.com",
-        contact: "9999999999",
-      },
-      theme: {
-        color: "#00bcd4",
-      },
-    };
-    const rzp = new window.Razorpay(options);
-    rzp.open();
+    if (!selectedUpiApp) {
+      alert("Please select a UPI app!");
+      return;
+    }
+
+    if (selectedUpiApp === "other" && !upiId.trim()) {
+      alert("Please enter your UPI ID!");
+      return;
+    }
+
+    setLoading(true);
+    setPaymentStatus('processing');
+
+    try {
+      const upiLink = generateUpiLink();
+      
+      // For mobile devices, try to open UPI app
+      if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        window.location.href = upiLink;
+        
+        // Show processing state and wait for user confirmation
+        setTimeout(() => {
+          const confirmed = confirm("Have you completed the payment? Click OK if payment is successful, Cancel if not.");
+          if (confirmed) {
+            setPaymentStatus('completed');
+            handlePaymentSuccess();
+          } else {
+            setPaymentStatus('failed');
+            setLoading(false);
+          }
+        }, 3000);
+      } else {
+        // For desktop, show QR code
+        setTimeout(() => {
+          const confirmed = confirm("Please scan the QR code and complete the payment. Click OK when payment is done, Cancel if not.");
+          if (confirmed) {
+            setPaymentStatus('completed');
+            handlePaymentSuccess();
+          } else {
+            setPaymentStatus('failed');
+            setLoading(false);
+          }
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('UPI payment failed:', error);
+      setPaymentStatus('failed');
+      alert('Failed to initiate UPI payment. Please try again.');
+      setLoading(false);
+    }
+  };
+
+  const handlePaymentSuccess = async () => {
+    try {
+      const transactionId = `TXN${Date.now()}`;
+      
+      // Send booking details to backend
+      const response = await fetch('/api/process-booking', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          transactionId,
+          bookingDetails,
+          fileName: file?.name,
+          paymentMethod: 'UPI',
+          amount: amount,
+        }),
+      });
+      
+      if (response.ok) {
+        alert(`Payment Successful! 
+               Transaction ID: ${transactionId}
+               Booking confirmed for ${bookingDetails.vehicleName}`);
+        navigate('/booking-confirmation', { 
+          state: { 
+            transactionId,
+            bookingDetails 
+          }
+        });
+      } else {
+        throw new Error('Failed to process booking');
+      }
+    } catch (error) {
+      console.error('Booking processing failed:', error);
+      alert('Payment successful but booking processing failed. Please contact support.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpiAppSelect = (appId: string) => {
+    setSelectedUpiApp(appId);
+    setShowUpiInput(appId === "other");
   };
 
   return (
@@ -101,12 +229,41 @@ const Payment = () => {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-white font-semibold mb-2">Secure Payment</h3>
-                  <p className="text-gray-400">Your payment is processed securely</p>
-                  <p className="text-gray-400">Powered by Razorpay</p>
+                  <h3 className="text-white font-semibold mb-2">UPI Payment</h3>
+                  <p className="text-gray-400">Pay securely using UPI</p>
+                  <p className="text-gray-400">Instant & Safe</p>
                 </div>
               </div>
             </div>
+
+            {/* UPI QR Code Display */}
+            {paymentStatus === 'processing' && (
+              <div className="mt-8 p-6 bg-gray-700 rounded-lg text-center">
+                <h4 className="text-cyan-400 font-semibold mb-4">Scan QR Code to Pay</h4>
+                <div className="bg-white p-4 rounded-lg inline-block">
+                  <img 
+                    src={generateQRCode(generateUpiLink())} 
+                    alt="UPI Payment QR Code"
+                    className="w-48 h-48"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.nextElementSibling!.style.display = 'block';
+                    }}
+                  />
+                  <div className="w-48 h-48 bg-gray-200 rounded flex items-center justify-center text-gray-600" style={{display: 'none'}}>
+                    QR Code Loading...
+                  </div>
+                </div>
+                <p className="text-cyan-400 font-semibold mt-4">Amount: ₹{amount}</p>
+                <p className="text-gray-400 text-sm mt-2">Scan with any UPI app to pay</p>
+                <div className="mt-4 pt-4 border-t border-gray-600">
+                  <p className="text-gray-400 text-sm">Or open your UPI app and pay to:</p>
+                  <p className="text-white font-mono bg-gray-800 px-3 py-2 rounded mt-2 select-all">
+                    BARS Wheels
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Upload & Payment Form */}
@@ -171,6 +328,46 @@ const Payment = () => {
                 </div>
               )}
 
+              {/* UPI App Selection */}
+              {file && (
+                <div className="space-y-4">
+                  <label className="block text-gray-300 font-medium">
+                    Choose UPI App
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {upiApps.map((app) => (
+                      <button
+                        key={app.id}
+                        onClick={() => handleUpiAppSelect(app.id)}
+                        className={`p-3 rounded-lg border-2 transition-colors flex items-center space-x-3 ${
+                          selectedUpiApp === app.id
+                            ? 'border-cyan-400 bg-cyan-400/10'
+                            : 'border-gray-600 hover:border-gray-500'
+                        }`}
+                      >
+                        <span className="text-2xl">{app.icon}</span>
+                        <span className="text-white font-medium">{app.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                  
+                  {showUpiInput && (
+                    <div>
+                      <label className="block text-gray-300 font-medium mb-2">
+                        Enter UPI ID
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="yourname@upi"
+                        value={upiId}
+                        onChange={(e) => setUpiId(e.target.value)}
+                        className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-cyan-400"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="border-t border-gray-700 pt-6">
                 <div className="flex justify-between items-center mb-6">
                   <span className="text-gray-300">Verification Fee:</span>
@@ -178,16 +375,33 @@ const Payment = () => {
                 </div>
                 
                 <button
-                  onClick={handlePayment}
-                  disabled={!file}
+                  onClick={handleUpiPayment}
+                  disabled={!file || !selectedUpiApp || loading || (selectedUpiApp === "other" && !upiId.trim())}
                   className={`w-full py-4 px-6 rounded-lg font-semibold text-lg transition-colors ${
-                    file 
+                    file && selectedUpiApp && !loading && (selectedUpiApp !== "other" || upiId.trim())
                       ? 'bg-green-600 hover:bg-green-700 text-white' 
                       : 'bg-gray-600 text-gray-400 cursor-not-allowed'
                   }`}
                 >
-                  {file ? 'Pay Now' : 'Upload File to Continue'}
+                  {loading ? (
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      <span>
+                        {paymentStatus === 'processing' ? 'Waiting for payment...' : 'Processing...'}
+                      </span>
+                    </div>
+                  ) : file && selectedUpiApp ? (
+                    'Pay with UPI'
+                  ) : (
+                    'Upload File & Select UPI App'
+                  )}
                 </button>
+                
+                {paymentStatus === 'processing' && (
+                  <p className="text-center text-cyan-400 text-sm mt-3">
+                    Complete the payment in your UPI app and wait for confirmation
+                  </p>
+                )}
               </div>
             </div>
           </div>
