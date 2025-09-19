@@ -35,7 +35,7 @@ const Payment = () => {
     { name: "Other UPI App", id: "other", icon: "💳" }
   ];
 
-  const merchantUpiId = "smbhuvantsi@oksbi"; // Replace with your actual UPI ID (kept private)
+  const merchantUpiId = "merchant@paytm"; // Replace with your actual UPI ID (kept private)
   const amount = 500;
 
   // Redirect if no booking details
@@ -77,9 +77,18 @@ const Payment = () => {
     return `upi://pay?${upiParams.toString()}`;
   };
 
-  const generateQRCode = (upiLink: string) => {
+  const generateUpiQRString = () => {
+    const transactionId = `TXN${Date.now()}`;
+    const note = `Payment for ${bookingDetails.vehicleName} booking`;
+    
+    // Standard UPI QR format that banks recognize
+    const upiQRString = `upi://pay?pa=${merchantUpiId}&pn=BARS Wheels&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}&tr=${transactionId}`;
+    return upiQRString;
+  };
+
+  const generateQRCode = (upiString: string) => {
     const size = 200;
-    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(upiLink)}`;
+    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(upiString)}`;
     return qrApiUrl;
   };
 
@@ -242,12 +251,16 @@ const Payment = () => {
                 <h4 className="text-cyan-400 font-semibold mb-4">Scan QR Code to Pay</h4>
                 <div className="bg-white p-4 rounded-lg inline-block">
                   <img 
-                    src={generateQRCode(generateUpiLink())} 
+                    src={generateQRCode(generateUpiQRString())} 
                     alt="UPI Payment QR Code"
                     className="w-48 h-48"
                     onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                      e.currentTarget.nextElementSibling!.style.display = 'block';
+                      const target = e.currentTarget as HTMLImageElement;
+                      const sibling = target.nextElementSibling as HTMLDivElement;
+                      target.style.display = 'none';
+                      if (sibling) {
+                        sibling.style.display = 'block';
+                      }
                     }}
                   />
                   <div className="w-48 h-48 bg-gray-200 rounded flex items-center justify-center text-gray-600" style={{display: 'none'}}>
