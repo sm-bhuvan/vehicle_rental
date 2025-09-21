@@ -59,12 +59,14 @@ router.post('/', auth, [
 
     // Check if vehicle exists and is available
     const vehicle = await Vehicle.findById(vehicleId);
-    if (!vehicle || !vehicle.isActive || !vehicle.availability) {
+    if (!vehicle || !vehicle.isActive || !vehicle.isAvailable) {
       return res.status(404).json({
         success: false,
         message: 'Vehicle not available'
       });
     }
+
+    // Vehicle availability is checked via existing rental records below
 
     // Check for conflicting rentals
     const conflictingRentals = await Rental.find({

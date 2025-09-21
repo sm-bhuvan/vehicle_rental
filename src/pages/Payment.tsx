@@ -20,6 +20,10 @@ const Payment = () => {
   const [upiId, setUpiId] = useState<string>("");
   const [showUpiInput, setShowUpiInput] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'completed' | 'failed'>('idle');
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [paymentVerified, setPaymentVerified] = useState<boolean>(false);
+  const [verificationAttempts, setVerificationAttempts] = useState<number>(0);
+  const [timeRemaining, setTimeRemaining] = useState<number>(300); // 5 minutes in seconds
   
   const location = useLocation();
   const navigate = useNavigate();
@@ -41,7 +45,6 @@ const Payment = () => {
   // Redirect if no booking details
   useEffect(() => {
     if (!bookingDetails) {
-      alert("No booking details found. Please go back to the contact form.");
       navigate("/contact");
     }
   }, [bookingDetails, navigate]);
@@ -92,65 +95,134 @@ const Payment = () => {
     return qrApiUrl;
   };
 
+  // Payment verification function
+  const verifyPayment = async (transactionId: string) => {
+    try {
+      // In a real implementation, you would check with your payment gateway
+      // For now, we'll simulate checking with a backend endpoint
+      const response = await fetch('/api/verify-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          transactionId,
+          amount: amount,
+          upiId: merchantUpiId
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        return result.verified;
+      }
+      return false;
+    } catch (error) {
+      console.error('Payment verification failed:', error);
+      return false;
+    }
+  };
+
+  // Start payment verification polling
+  const startPaymentVerification = (transactionId: string) => {
+    const maxAttempts = 50; // Check for 5 minutes (50 * 6 seconds = 300 seconds)
+    const totalTime = 300; // 5 minutes in seconds
+    let currentTime = totalTime;
+    
+    // Start countdown timer
+    const countdownInterval = setInterval(() => {
+      setTimeRemaining(prev => {
+        const newTime = prev - 1;
+        if (newTime <= 0) {
+          clearInterval(countdownInterval);
+          return 0;
+        }
+        return newTime;
+      });
+    }, 1000);
+    
+    const interval = setInterval(async () => {
+      setVerificationAttempts(prev => {
+        const newAttempts = prev + 1;
+        
+        if (newAttempts >= maxAttempts) {
+          clearInterval(interval);
+          clearInterval(countdownInterval);
+          setPaymentStatus('failed');
+          setErrorMessage('Payment verification timeout after 5 minutes. Please try again or contact support.');
+          return newAttempts;
+        }
+
+        // Check payment status
+        verifyPayment(transactionId).then(verified => {
+          if (verified) {
+            clearInterval(interval);
+            clearInterval(countdownInterval);
+            setPaymentVerified(true);
+            setPaymentStatus('completed');
+            handlePaymentSuccess();
+          } else {
+            // Payment not verified yet, continue checking
+            console.log(`Payment verification attempt ${newAttempts}: Not verified yet`);
+          }
+        }).catch(error => {
+          console.error('Payment verification error:', error);
+          // Don't fail the entire process on verification errors, just log them
+        });
+
+        return newAttempts;
+      });
+    }, 6000); // Check every 6 seconds
+  };
+
   const handleUpiPayment = async () => {
+    setErrorMessage('');
+    
     if (!file) {
-      alert("Please upload your PDF first!");
+      setErrorMessage('Please upload your PDF first!');
       return;
     }
 
     if (!selectedUpiApp) {
-      alert("Please select a UPI app!");
+      setErrorMessage('Please select a UPI app!');
       return;
     }
 
     if (selectedUpiApp === "other" && !upiId.trim()) {
-      alert("Please enter your UPI ID!");
+      setErrorMessage('Please enter your UPI ID!');
       return;
     }
 
     setLoading(true);
     setPaymentStatus('processing');
+    setVerificationAttempts(0);
+    setTimeRemaining(300); // Reset to 5 minutes
 
     try {
+      const transactionId = `TXN${Date.now()}`;
       const upiLink = generateUpiLink();
       
       // For mobile devices, try to open UPI app
       if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
         window.location.href = upiLink;
-        
-        // Show processing state and wait for user confirmation
-        setTimeout(() => {
-          const confirmed = confirm("Have you completed the payment? Click OK if payment is successful, Cancel if not.");
-          if (confirmed) {
-            setPaymentStatus('completed');
-            handlePaymentSuccess();
-          } else {
-            setPaymentStatus('failed');
-            setLoading(false);
-          }
-        }, 3000);
-      } else {
-        // For desktop, show QR code
-        setTimeout(() => {
-          const confirmed = confirm("Please scan the QR code and complete the payment. Click OK when payment is done, Cancel if not.");
-          if (confirmed) {
-            setPaymentStatus('completed');
-            handlePaymentSuccess();
-          } else {
-            setPaymentStatus('failed');
-            setLoading(false);
-          }
-        }, 2000);
       }
+      
+      // Start payment verification polling
+      startPaymentVerification(transactionId);
+      
     } catch (error) {
       console.error('UPI payment failed:', error);
       setPaymentStatus('failed');
-      alert('Failed to initiate UPI payment. Please try again.');
+      setErrorMessage('Failed to initiate UPI payment. Please try again.');
       setLoading(false);
     }
   };
 
+
   const handlePaymentSuccess = async () => {
+    setLoading(true);
+    setErrorMessage('');
+    
     try {
       const transactionId = `TXN${Date.now()}`;
       
@@ -170,21 +242,26 @@ const Payment = () => {
       });
       
       if (response.ok) {
-        alert(`Payment Successful! 
-               Transaction ID: ${transactionId}
-               Booking confirmed for ${bookingDetails.vehicleName}`);
-        navigate('/booking-confirmation', { 
-          state: { 
-            transactionId,
-            bookingDetails 
-          }
-        });
+        const result = await response.json();
+        // Show success message briefly before redirecting
+        setPaymentStatus('completed');
+        setTimeout(() => {
+          navigate('/booking-confirmation', { 
+            state: { 
+              transactionId,
+              bookingDetails,
+              success: true,
+              message: 'Payment successful! Booking confirmed.'
+            }
+          });
+        }, 1000);
       } else {
         throw new Error('Failed to process booking');
       }
     } catch (error) {
       console.error('Booking processing failed:', error);
-      alert('Payment successful but booking processing failed. Please contact support.');
+      setPaymentStatus('failed');
+      setErrorMessage('Payment successful but booking processing failed. Please contact support.');
     } finally {
       setLoading(false);
     }
@@ -193,6 +270,14 @@ const Payment = () => {
   const handleUpiAppSelect = (appId: string) => {
     setSelectedUpiApp(appId);
     setShowUpiInput(appId === "other");
+  };
+
+  const handleManualPaymentConfirm = () => {
+    if (paymentStatus === 'processing') {
+      setPaymentVerified(true);
+      setPaymentStatus('completed');
+      handlePaymentSuccess();
+    }
   };
 
   return (
@@ -245,6 +330,23 @@ const Payment = () => {
               </div>
             </div>
 
+            {/* Payment Success Display */}
+            {paymentStatus === 'completed' && (
+              <div className="mt-8 p-6 bg-green-900/20 border border-green-500 rounded-lg text-center">
+                <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M9,20.42L2.79,14.21L5.62,11.38L9,14.77L18.88,4.88L21.71,7.71L9,20.42Z"/>
+                  </svg>
+                </div>
+                <h4 className="text-green-400 font-semibold mb-2">Payment Successful!</h4>
+                <p className="text-gray-300 text-sm">Processing your booking...</p>
+                <div className="flex items-center justify-center space-x-2 mt-4">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-400"></div>
+                  <span className="text-green-400 text-sm">Redirecting to confirmation page...</span>
+                </div>
+              </div>
+            )}
+
             {/* UPI QR Code Display */}
             {paymentStatus === 'processing' && (
               <div className="mt-8 p-6 bg-gray-700 rounded-lg text-center">
@@ -274,6 +376,47 @@ const Payment = () => {
                   <p className="text-white font-mono bg-gray-800 px-3 py-2 rounded mt-2 select-all">
                     BARS Wheels
                   </p>
+                </div>
+                
+                {/* Payment Verification Status */}
+                <div className="mt-6 space-y-4">
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-cyan-400"></div>
+                    <p className="text-cyan-400 text-sm">
+                      Verifying payment... ({verificationAttempts}/50 attempts)
+                    </p>
+                  </div>
+                  
+                  {/* Time Remaining Display */}
+                  <div className="bg-blue-900/20 border border-blue-500 rounded-lg p-4 text-center">
+                    <p className="text-blue-400 font-semibold text-lg">
+                      Time Remaining: {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}
+                    </p>
+                    <p className="text-gray-300 text-sm mt-1">
+                      You have {Math.floor(timeRemaining / 60)} minutes to complete the payment
+                    </p>
+                  </div>
+                  
+                  <div className="bg-gray-600 rounded-lg p-4">
+                    <p className="text-gray-300 text-sm text-center mb-3">
+                      Please complete the payment in your UPI app using the QR code above.
+                    </p>
+                    
+                    {/* Manual Confirmation Button */}
+                    <div className="text-center">
+                      <button
+                        onClick={handleManualPaymentConfirm}
+                        disabled={loading}
+                        className="px-8 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white font-semibold rounded-lg transition-colors text-lg"
+                      >
+                        ✓ I've Completed the Payment
+                      </button>
+                    </div>
+                    
+                    <p className="text-gray-400 text-xs text-center mt-3">
+                      After completing payment in your UPI app, click the button above to confirm
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
@@ -378,6 +521,18 @@ const Payment = () => {
                       />
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Error Message Display */}
+              {errorMessage && (
+                <div className="bg-red-900/20 border border-red-500 text-red-300 px-4 py-3 rounded-lg mb-4">
+                  <div className="flex items-center">
+                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                    {errorMessage}
+                  </div>
                 </div>
               )}
 

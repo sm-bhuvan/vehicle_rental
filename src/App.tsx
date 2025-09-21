@@ -20,6 +20,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./contexts/AuthContext";
 import { VehicleProvider } from "./contexts/VehicleContext";
 import Payment from "./pages/Payment";
+import BookingConfirmation from "./pages/BookingConfirmation";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ const App = () => (
                 <Route path="/services" element={<Services />} />
                 <Route path="/contact" element={<ContactPage />} />
                 <Route path="/payment" element={<Payment/>} />
+                <Route path="/booking-confirmation" element={<BookingConfirmation/>} />
                 
                 {/* Admin Routes */}
                 <Route path="/admin/login" element={<AdminLogin />} />
