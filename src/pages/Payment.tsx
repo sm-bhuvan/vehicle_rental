@@ -35,7 +35,7 @@ const Payment = () => {
     { name: "Other UPI App", id: "other", icon: "💳" }
   ];
 
-  const merchantUpiId = "merchant@paytm"; // Replace with your actual UPI ID (kept private)
+  const merchantUpiId = "smbhuvantsi@oksbi"; // Replace with your actual UPI ID (kept private)
   const amount = 500;
 
   // Redirect if no booking details
