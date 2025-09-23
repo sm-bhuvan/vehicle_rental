@@ -28,4 +28,5 @@ export interface ChatMessage {
   id: number;
   type: 'user' | 'bot';
   text: string;
+  buttons?: string[];
 }
