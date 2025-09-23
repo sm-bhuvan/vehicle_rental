@@ -1,62 +1,78 @@
-import { useState } from "react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { MessageCircle, X, Send, Bot, User } from "lucide-react";
 import { ChatMessage } from "../types/vehicle";
 
 const ChatBot = () => {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 1,
-      type: 'bot',
-      text: "Hi! I'm your vehicle rental assistant. Tell me your budget and rental duration, and I'll help you find the perfect vehicle!"
-    }
+      type: "bot",
+      text: "Hi! I'm your vehicle rental assistant. You can explore options below.",
+      buttons: ["Show Vehicles", "Admin Login"],
+    },
   ]);
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
+
+  const handleUserClick = (text: string) => {
+    const userMessage: ChatMessage = {
+      id: messages.length + 1,
+      type: "user",
+      text,
+    };
+    setMessages((prev) => [...prev, userMessage]);
+
+    if (text === "Show Vehicles") {
+      const botResponse: ChatMessage = {
+        id: messages.length + 2,
+        type: "bot",
+        text: "Here you are! Redirecting to the vehicles page...",
+        buttons: ["Book Now"],
+      };
+      setMessages((prev) => [...prev, botResponse]);
+
+      setTimeout(() => {
+        navigate("/vehicles");
+      }, 1000);
+      return;
+    }
+
+    if (text === "Admin Login") {
+      const botResponse: ChatMessage = {
+        id: messages.length + 2,
+        type: "bot",
+        text: "Redirecting to admin login...",
+      };
+      setMessages((prev) => [...prev, botResponse]);
+
+      setTimeout(() => {
+        navigate("/admin/login");
+      }, 1000);
+      return;
+    }
+
+    if (text === "Book Now") {
+      const botResponse: ChatMessage = {
+        id: messages.length + 2,
+        type: "bot",
+        text: "Great! Redirecting you to the booking page...",
+      };
+      setMessages((prev) => [...prev, botResponse]);
+
+      setTimeout(() => {
+        navigate("/contact");
+      }, 1000);
+      return;
+    }
+  };
 
   const handleSendMessage = () => {
     if (!inputValue.trim()) return;
 
-    const userMessage: ChatMessage = {
-      id: messages.length + 1,
-      type: 'user' as const,
-      text: inputValue
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-
-    // Simulate bot response
-    setTimeout(() => {
-      const botResponse: ChatMessage = {
-        id: messages.length + 2,
-        type: 'bot' as const,
-        text: getBotResponse(inputValue)
-      };
-      setMessages(prev => [...prev, botResponse]);
-    }, 1000);
-
-    setInputValue('');
-  };
-
-  const getBotResponse = (userInput: string): string => {
-    const input = userInput.toLowerCase();
-    
-    if (input.includes('budget') || input.includes('₹') || input.includes('price')) {
-      return "Great! Based on your budget, I can recommend some excellent options. For budgets under ₹5000/day, I'd suggest our economy cars. For ₹2000-4000/day, our premium sedans are perfect. Above ₹7000/day, you can enjoy our luxury cars and SUVs!";
-    }
-    
-    if (input.includes('day') || input.includes('week') || input.includes('month')) {
-      return "Perfect! For longer rentals, we offer special discounts. Weekly rentals get 15% off, and monthly rentals get 25% off. Would you like me to show you vehicles that fit your timeframe?";
-    }
-    
-    if (input.includes('car') || input.includes('vehicle')) {
-      return "We have an amazing selection! Are you looking for economy, luxury, or sports cars? Each category has different pricing and features.";
-    }
-    
-    if (input.includes('bike') || input.includes('motorcycle')) {
-      return "Our motorcycle collection includes sport bikes, cruisers, and touring bikes. Prices start from ₹2000/day. What type of riding experience are you looking for?";
-    }
-    
-    return "That's interesting! Could you tell me more about your budget range and how many days you need the vehicle? This will help me recommend the best options for you.";
+    handleUserClick(inputValue);
+    setInputValue("");
   };
 
   return (
@@ -76,7 +92,7 @@ const ChatBot = () => {
           <div className="flex items-center justify-between p-4 border-b border-border/20">
             <div className="flex items-center space-x-2">
               <Bot className="h-6 w-6 text-neon" />
-              <span className="font-semibold text-neon">Budget Assistant</span>
+              <span className="font-semibold text-neon">Vehicle Assistant</span>
             </div>
             <button
               onClick={() => setIsOpen(false)}
@@ -92,24 +108,40 @@ const ChatBot = () => {
               <div
                 key={message.id}
                 className={`flex items-start space-x-2 ${
-                  message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''
+                  message.type === "user" ? "flex-row-reverse space-x-reverse" : ""
                 }`}
               >
-                <div className={`p-2 rounded-full ${
-                  message.type === 'bot' ? 'bg-primary/20' : 'bg-secondary'
-                }`}>
-                  {message.type === 'bot' ? (
+                <div
+                  className={`p-2 rounded-full ${
+                    message.type === "bot" ? "bg-primary/20" : "bg-secondary"
+                  }`}
+                >
+                  {message.type === "bot" ? (
                     <Bot className="h-4 w-4 text-neon" />
                   ) : (
                     <User className="h-4 w-4" />
                   )}
                 </div>
-                <div className={`max-w-[70%] p-3 rounded-lg ${
-                  message.type === 'bot' 
-                    ? 'bg-secondary text-foreground' 
-                    : 'bg-primary text-primary-foreground'
-                }`}>
+                <div
+                  className={`max-w-[70%] p-3 rounded-lg ${
+                    message.type === "bot"
+                      ? "bg-secondary text-foreground"
+                      : "bg-primary text-primary-foreground"
+                  }`}
+                >
                   <p className="text-sm">{message.text}</p>
+
+                  {/* Render buttons if bot message has them */}
+                  {message.buttons &&
+                    message.buttons.map((btn, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleUserClick(btn)}
+                        className="mt-2 mr-2 px-3 py-1 bg-primary text-white rounded hover:bg-primary/90 text-xs"
+                      >
+                        {btn}
+                      </button>
+                    ))}
                 </div>
               </div>
             ))}
@@ -117,12 +149,12 @@ const ChatBot = () => {
 
           {/* Input */}
           <div className="p-4 border-t border-border/20">
-            <div className="flex space-x-2">
+            <div className="flex space-x-2 items-center">
               <input
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
                 placeholder="Ask about budget, duration, or vehicle type..."
                 className="flex-1 px-3 py-2 bg-input border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
