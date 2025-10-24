@@ -21,7 +21,7 @@ const sendEmail = async ({ to, subject, template, data }) => {
                 <html>
                 <head>
                     <meta charset="utf-8">
-                    <title>Booking Confirmation - BARS Wheels</title>
+                    <title>Booking Confirmation - ${data.rentalCompany?.rental_name || 'Vehicle Rental'}</title>
                     <style>
                         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
                         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
@@ -34,17 +34,18 @@ const sendEmail = async ({ to, subject, template, data }) => {
                         .highlight { background: #e8f4fd; padding: 15px; border-left: 4px solid #2196F3; margin: 20px 0; }
                         .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
                         .btn { display: inline-block; background: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0; }
+                        .rental-info { background: #f0f8ff; padding: 20px; border-radius: 8px; margin: 20px 0; }
                     </style>
                 </head>
                 <body>
                     <div class="container">
                         <div class="header">
-                            <h1>🚗 BARS Wheels</h1>
+                            <h1>🚗 ${data.rentalCompany?.rental_name || 'Vehicle Rental'}</h1>
                             <h2>Booking Confirmation</h2>
                         </div>
                         <div class="content">
                             <p>Dear ${data.customerName},</p>
-                            <p>Thank you for choosing BARS Wheels! Your vehicle booking has been confirmed successfully.</p>
+                            <p>Thank you for choosing ${data.rentalCompany?.rental_name || 'our rental service'}! Your vehicle booking has been confirmed successfully.</p>
                             
                             <div class="highlight">
                                 <h3>📋 Booking Details</h3>
@@ -57,12 +58,12 @@ const sendEmail = async ({ to, subject, template, data }) => {
                                     <span class="detail-value">${data.vehicleName}</span>
                                 </div>
                                 <div class="detail-row">
-                                    <span class="detail-label">Pickup Date:</span>
-                                    <span class="detail-value">${data.pickupDate}</span>
+                                    <span class="detail-label">Pickup Date & Time:</span>
+                                    <span class="detail-value">${data.pickupDate} at ${data.pickupTime}</span>
                                 </div>
                                 <div class="detail-row">
-                                    <span class="detail-label">Return Date:</span>
-                                    <span class="detail-value">${data.returnDate}</span>
+                                    <span class="detail-label">Return Date & Time:</span>
+                                    <span class="detail-value">${data.returnDate} at ${data.returnTime}</span>
                                 </div>
                                 <div class="detail-row">
                                     <span class="detail-label">Total Amount:</span>
@@ -70,11 +71,13 @@ const sendEmail = async ({ to, subject, template, data }) => {
                                 </div>
                             </div>
                             
-                            <div class="booking-details">
-                                <h3>📞 Contact Information</h3>
-                                <p><strong>Phone:</strong> +91 94433 18232</p>
-                                <p><strong>Email:</strong> support@bars.com</p>
-                                <p><strong>Address:</strong> BARS Wheels, Vehicle Rental Services</p>
+                            <div class="rental-info">
+                                <h3>🏢 Rental Company Information</h3>
+                                <p><strong>Company:</strong> ${data.rentalCompany?.rental_name || 'N/A'}</p>
+                                <p><strong>Location:</strong> ${data.rentalCompany?.location || 'N/A'}, ${data.rentalCompany?.region || 'N/A'}</p>
+                                <p><strong>Address:</strong> ${data.rentalCompany?.address?.street || 'N/A'}, ${data.rentalCompany?.address?.city || 'N/A'}, ${data.rentalCompany?.address?.state || 'N/A'} - ${data.rentalCompany?.address?.pincode || 'N/A'}</p>
+                                <p><strong>Contact Phone:</strong> ${data.rentalCompany?.contact?.phone || 'N/A'}</p>
+                                <p><strong>Contact Email:</strong> ${data.rentalCompany?.contact?.email || 'N/A'}</p>
                             </div>
                             
                             <div class="highlight">
@@ -84,17 +87,18 @@ const sendEmail = async ({ to, subject, template, data }) => {
                                     <li>Bring a valid driver's license and the credit card used for booking</li>
                                     <li>Inspect the vehicle thoroughly before taking possession</li>
                                     <li>Report any damages immediately to avoid additional charges</li>
+                                    <li>Keep this confirmation email with you during the rental period</li>
                                 </ul>
                             </div>
                             
-                            <p>If you have any questions or need to make changes to your booking, please contact us immediately.</p>
+                            <p>If you have any questions or need to make changes to your booking, please contact us immediately using the information provided above.</p>
                             
                             <p>We look forward to serving you!</p>
-                            <p><strong>The BARS Wheels Team</strong></p>
+                            <p><strong>The ${data.rentalCompany?.rental_name || 'Vehicle Rental'} Team</strong></p>
                         </div>
                         <div class="footer">
                             <p>This is an automated message. Please do not reply to this email.</p>
-                            <p>© 2024 BARS Wheels. All rights reserved.</p>
+                            <p>© 2024 ${data.rentalCompany?.rental_name || 'Vehicle Rental'}. All rights reserved.</p>
                         </div>
                     </div>
                 </body>
@@ -111,7 +115,7 @@ const sendEmail = async ({ to, subject, template, data }) => {
         }
 
         const mailOptions = {
-            from: 'bars@gmail.com', // Use bars@gmail.com as sender
+            from: data.rentalCompany?.contact?.email || process.env.EMAIL_USER || 'bars@gmail.com',
             to,
             subject,
             html: htmlContent,

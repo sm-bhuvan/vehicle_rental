@@ -178,14 +178,14 @@ const AdminDashboard = () => {
                             alt={vehicle.name}
                             className="w-12 h-12 rounded-lg object-cover"
                           />
-                                                     <div>
+                           <div>
                              <p className="font-medium text-foreground">{vehicle.name}</p>
                              <p className="text-sm text-muted-foreground">{vehicle.reviews} reviews</p>
                            </div>
                         </div>
                       </td>
                       <td className="py-4 px-4 text-muted-foreground">{vehicle.type}</td>
-                      <td className="py-4 px-4 text-muted-foreground">${vehicle.pricePerDay}</td>
+                      <td className="py-4 px-4 text-muted-foreground">₹{vehicle.pricePerDay}</td>
                       <td className="py-4 px-4">
                         <Badge 
                           variant={vehicle.available ? "default" : "secondary"}

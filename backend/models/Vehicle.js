@@ -20,7 +20,8 @@ const vehicleSchema = new mongoose.Schema({
         color: String
     },
     isAvailable: { type: Boolean, default: true },
-    isActive: { type: Boolean, default: true } // For administrative purposes
+    isActive: { type: Boolean, default: true }, // For administrative purposes
+    rentalCompany: { type: mongoose.Schema.Types.ObjectId, ref: 'RentalCompany' } // Reference to rental company
 }, { timestamps: true });
 
 const Vehicle = mongoose.model('Vehicle', vehicleSchema);
