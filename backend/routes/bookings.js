@@ -1,44 +1,62 @@
-// routes/bookings.js
+// backend/routes/bookings.js - Add this NEW route
+
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const Vehicle = require('../models/Vehicle');
-const Rental = require('../models/Rental');
-const Payment = require('../models/Payment');
-const User = require('../models/User');
-const { sendEmail } = require('../utils/email');
 const router = express.Router();
+const mongoose = require('mongoose');
 
-// Process booking after successful payment
-router.post('/process-booking', [
-  body('transactionId').notEmpty().withMessage('Transaction ID is required'),
-  body('bookingDetails').isObject().withMessage('Booking details are required'),
-  body('bookingDetails.vehicleId').isMongoId().withMessage('Valid vehicle ID is required'),
-  body('bookingDetails.firstName').notEmpty().withMessage('First name is required'),
-  body('bookingDetails.lastName').notEmpty().withMessage('Last name is required'),
-  body('bookingDetails.email').isEmail().withMessage('Valid email is required'),
-  body('bookingDetails.phone').notEmpty().withMessage('Phone number is required'),
-  body('bookingDetails.pickupDate').isISO8601().withMessage('Valid pickup date is required'),
-  body('bookingDetails.returnDate').isISO8601().withMessage('Valid return date is required'),
-  body('paymentMethod').notEmpty().withMessage('Payment method is required'),
-  body('amount').isNumeric().withMessage('Amount must be a number')
+// Import models (adjust paths as needed)
+const Vehicle = require('../models/Vehicle');
+const User = require('../models/User');
+
+// Simple Booking Schema - Create this if you don't have it
+const bookingSchema = new mongoose.Schema({
+  bookingId: { type: String, required: true, unique: true },
+  vehicleId: { type: String, required: true },
+  vehicleName: { type: String },
+  firstName: { type: String, required: true },
+  lastName: { type: String, required: true },
+  email: { type: String, required: true },
+  phone: { type: String, required: true },
+  pickupDate: { type: Date, required: true },
+  returnDate: { type: Date, required: true },
+  message: { type: String },
+  transactionRef: { type: String, required: true },
+  paymentAmount: { type: Number, required: true },
+  paymentMethod: { type: String, default: 'UPI' },
+  paymentStatus: { type: String, default: 'completed' },
+  upiId: { type: String },
+  documentName: { type: String },
+  status: { type: String, default: 'confirmed' },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const Booking = mongoose.models.Booking || mongoose.model('Booking', bookingSchema);
+
+// SIMPLE DIRECT BOOKING ROUTE
+router.post('/create-direct', [
+  body('vehicleId').notEmpty().withMessage('Vehicle ID is required'),
+  body('firstName').notEmpty().withMessage('First name is required'),
+  body('lastName').notEmpty().withMessage('Last name is required'),
+  body('email').isEmail().withMessage('Valid email is required'),
+  body('phone').notEmpty().withMessage('Phone is required'),
+  body('pickupDate').notEmpty().withMessage('Pickup date is required'),
+  body('returnDate').notEmpty().withMessage('Return date is required'),
+  body('transactionRef').notEmpty().withMessage('Transaction reference is required'),
+  body('paymentAmount').isNumeric().withMessage('Payment amount is required')
 ], async (req, res) => {
   try {
+    console.log('📦 New booking request received');
+    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.error('❌ Validation errors:', errors.array());
       return res.status(400).json({
         success: false,
         message: 'Validation failed',
         errors: errors.array()
       });
     }
-
-    const {
-      transactionId,
-      bookingDetails,
-      fileName,
-      paymentMethod,
-      amount
-    } = req.body;
 
     const {
       vehicleId,
@@ -48,224 +66,254 @@ router.post('/process-booking', [
       phone,
       pickupDate,
       returnDate,
-      message
-    } = bookingDetails;
-
-    // Validate dates
-    const startDate = new Date(pickupDate);
-    const endDate = new Date(returnDate);
-
-    if (startDate >= endDate) {
-      return res.status(400).json({
-        success: false,
-        message: 'Return date must be after pickup date'
-      });
-    }
-
-    if (startDate < new Date()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Pickup date cannot be in the past'
-      });
-    }
-
-    // Check if vehicle exists and is available
-    const vehicle = await Vehicle.findById(vehicleId);
-    if (!vehicle) {
-      return res.status(404).json({
-        success: false,
-        message: 'Vehicle not found'
-      });
-    }
-
-    if (!vehicle.isAvailable || !vehicle.isActive) {
-      return res.status(400).json({
-        success: false,
-        message: 'Vehicle is not available for booking'
-      });
-    }
-
-    // Check for conflicting rentals
-    const conflictingRentals = await Rental.find({
-      vehicle: vehicleId,
-      rentalStatus: { $in: ['confirmed', 'active'] },
-      $or: [
-        {
-          startDate: { $lte: startDate },
-          endDate: { $gte: startDate }
-        },
-        {
-          startDate: { $lte: endDate },
-          endDate: { $gte: endDate }
-        },
-        {
-          startDate: { $gte: startDate },
-          endDate: { $lte: endDate }
-        }
-      ]
-    });
-
-    if (conflictingRentals.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Vehicle is not available for the selected dates'
-      });
-    }
-
-    // Find or create user
-    let user = await User.findOne({ email });
-    if (!user) {
-      user = new User({
-        firstName,
-        lastName,
-        email,
-        phone,
-        role: 'customer'
-      });
-      await user.save();
-    }
-
-    // Calculate rental amount (basic calculation - you can enhance this)
-    const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
-    const totalAmount = daysDiff * vehicle.pricePerDay;
-
-    // Create rental record
-    const rental = new Rental({
-      user: user._id,
-      vehicle: vehicleId,
-      startDate,
-      endDate,
-      totalAmount,
-      rentalStatus: 'confirmed',
-      paymentStatus: 'paid',
-      specialRequests: message || '',
-      notes: `Document uploaded: ${fileName || 'N/A'}`
-    });
-
-    await rental.save();
-
-    // Create payment record
-    const payment = new Payment({
-      user: user._id,
-      rental: rental._id,
+      message,
+      transactionRef,
+      paymentAmount,
       paymentMethod,
-      amount,
-      transactionId,
-      paymentStatus: 'completed'
+      upiId,
+      documentName
+    } = req.body;
+
+    // Generate unique booking ID
+    const bookingId = `BKG${Date.now()}${Math.random().toString(36).substr(2, 6)}`.toUpperCase();
+    
+    console.log('🎫 Generated booking ID:', bookingId);
+
+    // Get vehicle name (optional - won't fail if vehicle not found)
+    let vehicleName = 'Vehicle';
+    try {
+      const vehicle = await Vehicle.findOne({ 
+        $or: [
+          { _id: mongoose.Types.ObjectId.isValid(vehicleId) ? vehicleId : null },
+          { vehicleId: vehicleId }
+        ]
+      });
+      if (vehicle) {
+        vehicleName = `${vehicle.make} ${vehicle.model} ${vehicle.year}`;
+        console.log('✅ Vehicle found:', vehicleName);
+      }
+    } catch (err) {
+      console.log('⚠️ Vehicle lookup failed, continuing anyway');
+    }
+
+    // Create booking
+    const booking = new Booking({
+      bookingId,
+      vehicleId,
+      vehicleName,
+      firstName,
+      lastName,
+      email,
+      phone,
+      pickupDate: new Date(pickupDate),
+      returnDate: new Date(returnDate),
+      message: message || '',
+      transactionRef,
+      paymentAmount,
+      paymentMethod: paymentMethod || 'UPI',
+      paymentStatus: 'completed',
+      upiId: upiId || '',
+      documentName: documentName || 'license.pdf',
+      status: 'confirmed'
     });
 
-    await payment.save();
+    await booking.save();
+    console.log('✅ Booking saved to database:', bookingId);
 
-    // Note: Vehicle availability is managed through rental records
-    // No need to update vehicle schema - availability is checked via existing rentals
-
-    // Populate rental data for email
-    await rental.populate([
-      { path: 'vehicle', select: 'make model year type images pricePerDay location' },
-      { path: 'user', select: 'firstName lastName email phone' }
-    ]);
-
-    // Send booking confirmation email
+    // Create or update user (optional)
     try {
-      await sendEmail({
-        to: email,
-        subject: 'Booking Confirmation - BARS Wheels',
-        template: 'booking-confirmation',
-        data: {
-          customerName: `${firstName} ${lastName}`,
-          rental,
-          vehicle: rental.vehicle,
-          user: rental.user,
-          transactionId,
-          totalAmount,
-          pickupDate: startDate.toLocaleDateString(),
-          returnDate: endDate.toLocaleDateString(),
-          vehicleName: `${vehicle.make} ${vehicle.model} (${vehicle.year})`
+      let user = await User.findOne({ email });
+      if (!user) {
+        user = new User({
+          firstName,
+          lastName,
+          email,
+          phone,
+          role: 'customer'
+        });
+        await user.save();
+        console.log('✅ New user created');
+      }
+    } catch (userErr) {
+      console.log('⚠️ User creation skipped:', userErr.message);
+    }
+
+    // Send email notification
+    try {
+      const nodemailer = require('nodemailer');
+      
+      // Create transporter (use your SMTP settings)
+      const transporter = nodemailer.createTransporter({
+        host: process.env.SMTP_HOST || 'smtp.gmail.com',
+        port: process.env.SMTP_PORT || 587,
+        secure: false,
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS
         }
       });
-    } catch (emailError) {
-      console.error('Failed to send booking confirmation email:', emailError);
+
+      const pickupDateStr = new Date(pickupDate).toLocaleDateString('en-IN', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      const returnDateStr = new Date(returnDate).toLocaleDateString('en-IN', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      const mailOptions = {
+        from: process.env.SMTP_USER || 'noreply@barswheels.com',
+        to: email,
+        subject: `Booking Confirmed - ${bookingId}`,
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+              .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+              .booking-details { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+              .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+              .detail-label { font-weight: bold; color: #667eea; }
+              .detail-value { color: #333; }
+              .highlight { background: #667eea; color: white; padding: 15px; border-radius: 8px; text-align: center; margin: 20px 0; }
+              .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+              .button { display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 10px 0; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>🎉 Booking Confirmed!</h1>
+                <p>Thank you for choosing BARS Wheels</p>
+              </div>
+              
+              <div class="content">
+                <h2>Hello ${firstName} ${lastName},</h2>
+                <p>Your booking has been confirmed successfully. Here are your booking details:</p>
+                
+                <div class="highlight">
+                  <h3 style="margin: 0;">Booking ID: ${bookingId}</h3>
+                  <p style="margin: 5px 0;">Transaction Ref: ${transactionRef}</p>
+                </div>
+                
+                <div class="booking-details">
+                  <h3>Booking Details</h3>
+                  
+                  <div class="detail-row">
+                    <span class="detail-label">Vehicle:</span>
+                    <span class="detail-value">${vehicleName}</span>
+                  </div>
+                  
+                  <div class="detail-row">
+                    <span class="detail-label">Pickup Date:</span>
+                    <span class="detail-value">${pickupDateStr}</span>
+                  </div>
+                  
+                  <div class="detail-row">
+                    <span class="detail-label">Return Date:</span>
+                    <span class="detail-value">${returnDateStr}</span>
+                  </div>
+                  
+                  <div class="detail-row">
+                    <span class="detail-label">Customer Name:</span>
+                    <span class="detail-value">${firstName} ${lastName}</span>
+                  </div>
+                  
+                  <div class="detail-row">
+                    <span class="detail-label">Email:</span>
+                    <span class="detail-value">${email}</span>
+                  </div>
+                  
+                  <div class="detail-row">
+                    <span class="detail-label">Phone:</span>
+                    <span class="detail-value">${phone}</span>
+                  </div>
+                  
+                  <div class="detail-row">
+                    <span class="detail-label">Payment Amount:</span>
+                    <span class="detail-value">₹${paymentAmount}</span>
+                  </div>
+                  
+                  <div class="detail-row">
+                    <span class="detail-label">Payment Status:</span>
+                    <span class="detail-value" style="color: green; font-weight: bold;">✓ PAID</span>
+                  </div>
+                </div>
+                
+                ${message ? `
+                <div style="background: #f0f0f0; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                  <strong>Your Message:</strong>
+                  <p style="margin: 5px 0;">${message}</p>
+                </div>
+                ` : ''}
+                
+                <div style="margin: 30px 0; text-align: center;">
+                  <p><strong>Important Notes:</strong></p>
+                  <ul style="text-align: left; display: inline-block;">
+                    <li>Please bring your driver's license for verification</li>
+                    <li>Arrive 15 minutes before your pickup time</li>
+                    <li>Keep this booking reference for your records</li>
+                    <li>Contact us if you need to make any changes</li>
+                  </ul>
+                </div>
+                
+                <div style="text-align: center; margin: 20px 0;">
+                  <p>Questions? We're here to help!</p>
+                  <p>📞 Phone: +91 94433 18232</p>
+                  <p>📧 Email: support@barswheels.com</p>
+                </div>
+              </div>
+              
+              <div class="footer">
+                <p>This is an automated confirmation email from BARS Wheels.</p>
+                <p>Please do not reply to this email.</p>
+                <p>&copy; ${new Date().getFullYear()} BARS Wheels. All rights reserved.</p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `
+      };
+
+      await transporter.sendMail(mailOptions);
+      console.log('✅ Confirmation email sent to:', email);
+    } catch (emailErr) {
+      console.error('⚠️ Email sending failed:', emailErr.message);
       // Don't fail the booking if email fails
     }
 
+    // Return success
     res.status(201).json({
       success: true,
-      message: 'Booking processed successfully',
+      message: 'Booking created successfully',
       data: {
-        rental,
-        payment,
-        transactionId
+        bookingId: bookingId,
+        transactionRef: transactionRef,
+        status: 'confirmed'
       }
     });
 
   } catch (error) {
-    console.error('Process booking error:', error);
+    console.error('❌ Booking creation error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error while processing booking'
+      message: 'Failed to create booking',
+      error: error.message
     });
   }
 });
-
-// Verify payment status
-router.post('/verify-payment', [
-  body('transactionId').notEmpty().withMessage('Transaction ID is required'),
-  body('amount').isNumeric().withMessage('Amount must be a number'),
-  body('upiId').notEmpty().withMessage('UPI ID is required')
-], async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Validation failed',
-        errors: errors.array()
-      });
-    }
-
-    const { transactionId, amount, upiId } = req.body;
-
-    // In a real implementation, you would:
-    // 1. Check with your payment gateway (Razorpay, PayU, etc.)
-    // 2. Verify the transaction with the UPI ID
-    // 3. Check the amount matches
-    // 4. Verify the transaction status
-
-    // For now, we'll simulate verification
-    // In production, replace this with actual payment gateway API calls
-    const isVerified = await simulatePaymentVerification(transactionId, amount, upiId);
-
-    console.log(`Payment verification for ${transactionId}: ${isVerified ? 'VERIFIED' : 'NOT VERIFIED'}`);
-
-    res.json({
-      success: true,
-      verified: isVerified,
-      transactionId
-    });
-
-  } catch (error) {
-    console.error('Payment verification error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Payment verification failed'
-    });
-  }
-});
-
-// Simulate payment verification (replace with real payment gateway integration)
-const simulatePaymentVerification = async (transactionId, amount, upiId) => {
-  // This is a simulation - in real implementation, you would:
-  // 1. Call your payment gateway's verification API
-  // 2. Check transaction status
-  // 3. Verify amount and UPI ID
-  
-  // For demo purposes, we'll simulate that payment verification
-  // only succeeds when the user manually confirms payment
-  // In production, replace this with actual API calls
-  
-  // For now, always return false to prevent automatic verification
-  // The user must click "I've Completed the Payment" button
-  return false;
-};
 
 module.exports = router;

@@ -133,8 +133,8 @@ const Contact = () => {
                   <Mail className="h-6 w-6 text-neon mt-1" />
                   <div>
                     <h4 className="font-semibold mb-1">Email</h4>
-                    <p className="text-gray-400">booking@luxedrive.com</p>
-                    <p className="text-gray-400">support@luxedrive.com</p>
+                    <p className="text-gray-400">barswheels@gmail.com</p>
+                    <p className="text-gray-400">info.barsrental@gmail.com</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-4">
@@ -162,7 +162,7 @@ const Contact = () => {
             </div>
 
             {/* Quick Actions */}
-            <div className="glass-card rounded-xl p-8">
+            {/* <div className="glass-card rounded-xl p-8">
               <h3 className="text-2xl font-bold mb-6 text-neon">Quick Actions</h3>
               <div className="space-y-4">
                 <button className="btn-primary w-full justify-center">
@@ -175,7 +175,7 @@ const Contact = () => {
                   Live Chat Support
                 </button>
               </div>
-            </div>
+            </div> */}
           </div>
 
           {/* Contact Form */}

@@ -11,7 +11,7 @@ const Footer = () => {
             <div className="flex items-center space-x-2">
               <Car className="h-8 w-8 text-neon" />
               <span className="font-orbitron font-bold text-2xl text-neon">
-                LuxeDrive
+                BARS Wheels
               </span>
             </div>
             <p className="text-gray-400 leading-relaxed">
@@ -64,11 +64,11 @@ const Footer = () => {
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
                 <Phone className="h-5 w-5 text-neon" />
-                <span className="text-gray-400">+1 (555) 123-4567</span>
+                <span className="text-gray-400">+91 89037 35645</span>
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="h-5 w-5 text-neon" />
-                <span className="text-gray-400">info@luxedrive.com</span>
+                <span className="text-gray-400">info.barsrental@gmail.com</span>
               </div>
               <div className="flex items-start space-x-3">
                 <MapPin className="h-5 w-5 text-neon mt-1" />
@@ -84,7 +84,7 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="border-t border-border/20 pt-8 flex flex-col md:flex-row justify-between items-center">
           <div className="text-gray-400 text-sm mb-4 md:mb-0">
-            © 2024 LuxeDrive. All rights reserved.
+            © 2024 BARSWheels. All rights reserved.
           </div>
           <div className="flex space-x-6 text-sm text-gray-400">
             <a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a>

@@ -12,10 +12,10 @@ const About = () => {
         <div className="container mx-auto max-w-7xl">
           <div className="text-center mb-16">
             <h1 className="text-4xl md:text-6xl font-orbitron font-bold mb-6">
-              About <span className="text-neon">LuxeDrive</span>
+              About <span className="text-neon">BARS Wheels</span>
             </h1>
             <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-              Since 2010, we've been delivering premium vehicle rental experiences 
+              Since 2024, we've been delivering premium vehicle rental experiences 
               that exceed expectations. Our commitment to luxury, reliability, and 
               exceptional service has made us the trusted choice for discerning customers.
             </p>
@@ -64,7 +64,7 @@ const About = () => {
               </h2>
               <div className="space-y-4 text-gray-300">
                 <p>
-                  Founded in 2010 by automotive enthusiasts, LuxeDrive began with a simple mission: 
+                  Founded in 2024 by automotive enthusiasts, BARS Wheels began with a simple mission: 
                   to make luxury vehicles accessible to everyone who appreciates quality and performance.
                 </p>
                 <p>
@@ -83,19 +83,19 @@ const About = () => {
             <div className="glass-card rounded-xl p-8">
               <div className="grid grid-cols-2 gap-6 text-center">
                 <div>
-                  <div className="text-4xl font-bold text-neon mb-2">14+</div>
+                  <div className="text-4xl font-bold text-neon mb-2">1+</div>
                   <div className="text-gray-400">Years Experience</div>
                 </div>
                 <div>
-                  <div className="text-4xl font-bold text-neon mb-2">500+</div>
+                  <div className="text-4xl font-bold text-neon mb-2">100+</div>
                   <div className="text-gray-400">Premium Vehicles</div>
                 </div>
                 <div>
-                  <div className="text-4xl font-bold text-neon mb-2">50K+</div>
+                  <div className="text-4xl font-bold text-neon mb-2">10K+</div>
                   <div className="text-gray-400">Happy Customers</div>
                 </div>
                 <div>
-                  <div className="text-4xl font-bold text-neon mb-2">25+</div>
+                  <div className="text-4xl font-bold text-neon mb-2">5+</div>
                   <div className="text-gray-400">Locations</div>
                 </div>
               </div>
