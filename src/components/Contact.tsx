@@ -158,9 +158,9 @@ const Contact = () => {
                   <div>
                     <h4 className="font-semibold mb-1">Address</h4>
                     <p className="text-gray-400">
-                      123 Luxury Avenue<br />
-                      Beverly Hills, CA 90210<br />
-                      United States
+                      IIIT Kottayam<br />
+                      Valavoor, Pala<br />
+                      Kerala, India
                     </p>
                   </div>
                 </div>
@@ -246,7 +246,7 @@ const Contact = () => {
                   name="phone"
                   value={formData.phone}
                   onChange={handleInputChange}
-                  placeholder="+91 94433 18232"
+                  placeholder="+91 XXX XXX XXXX"
                   className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
