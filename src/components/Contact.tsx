@@ -57,8 +57,43 @@ const Contact = () => {
   const validateForm = () => {
     const { firstName, lastName, email, message } = formData;
 
+    // Allowed email domains/extensions
+    const emailExtensions = [
+      "@gmail.com",
+      "@outlook.com",
+      "@hotmail.com",
+      "@yahoo.com",
+      "@icloud.com",
+      "@qq.com",
+      "@163.com",
+      "@yandex.ru",
+      "@mail.ru",
+      "@protonmail.com"
+    ];
+
     if (!firstName.trim() || !lastName.trim() || !email.trim() || !message.trim()) {
       alert('Please fill in all required fields');
+      return false;
+    }
+
+    // Names should not start with numbers
+    if (/^[0-9]/.test(firstName.trim()) || /^[0-9]/.test(lastName.trim())) {
+      alert('Names must not start with a number');
+      return false;
+    }
+
+    // Basic email format validation
+    const normalizedEmail = email.trim().toLowerCase();
+    const emailFormatOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail);
+    if (!emailFormatOk) {
+      alert('Please enter a valid email address');
+      return false;
+    }
+
+    // Email must end with one of the allowed extensions
+    const hasAllowedExtension = emailExtensions.some(ext => normalizedEmail.endsWith(ext));
+    if (!hasAllowedExtension) {
+      alert('Email domain is not supported. Please use a common provider (e.g., Gmail, Outlook).');
       return false;
     }
 
@@ -208,6 +243,8 @@ const Contact = () => {
                     value={formData.firstName}
                     onChange={handleInputChange}
                     required
+                    pattern="^[^0-9].*"
+                    title="First name must not start with a number"
                     placeholder="John"
                     className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   />
@@ -220,6 +257,8 @@ const Contact = () => {
                     value={formData.lastName}
                     onChange={handleInputChange}
                     required
+                    pattern="^[^0-9].*"
+                    title="Last name must not start with a number"
                     placeholder="Doe"
                     className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   />
@@ -234,6 +273,7 @@ const Contact = () => {
                   value={formData.email}
                   onChange={handleInputChange}
                   required
+                  inputMode="email"
                   placeholder="john@example.com"
                   className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 />
