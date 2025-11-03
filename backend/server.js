@@ -17,7 +17,7 @@ const rentalCompanyRoutes = require('./routes/rentalCompanies');
 // const paymentRoutes = require('./routes/payments');
 const adminRoutes = require('./routes/admin');
 const userRoutes = require('./routes/users');
-// const verificationRoutes = require('./routes/verification');
+const verificationRoutes = require('./routes/verification');
 
 // Import middlewares
 const { auth } = require('./middlewares/auth');
@@ -68,12 +68,12 @@ app.use('/api/auth', authRoutes);
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/rentals', rentalRoutes);
 app.use('/api/quotes', quoteRoutes);
-app.use('/api', bookingRoutes);
+app.use('/api/bookings', bookingRoutes);
 app.use('/api/rental-companies', rentalCompanyRoutes);
 //app.use('/api/payments', paymentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/users', userRoutes);
-// app.use('/api', verificationRoutes); // License verification disabled
+app.use('/api', verificationRoutes); // License verification enabled
 
 // 404 handler
 app.use('*', (req, res) => {

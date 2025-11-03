@@ -47,13 +47,25 @@ router.post(
           pngFile: true,
         };
         // Define a unique output name for the converted image
-        const imageOutputFile = path.join(
+        const imageOutputBase = path.join(
           uploadDir,
           `${req.file.filename}-img`,
         );
-        await poppler.pdfToCairo(filePath, imageOutputFile, options);
-        imageToScan = `${imageOutputFile}.png`; // Tesseract will scan this PNG
-        console.log('Conversion complete.');
+        await poppler.pdfToCairo(filePath, imageOutputBase, options);
+
+        // pdfToCairo on Windows may produce "-1.png" or "_1.png"
+        const candidatePaths = [
+          `${imageOutputBase}.png`,
+          `${imageOutputBase}-1.png`,
+          `${imageOutputBase}_1.png`,
+        ];
+        const found = candidatePaths.find(p => fs.existsSync(p));
+        if (!found) {
+          console.error('PDF to PNG conversion did not produce expected file. Tried:', candidatePaths);
+          throw new Error('Failed to convert PDF to image for OCR. Please try uploading an image instead.');
+        }
+        imageToScan = found; // Tesseract will scan this PNG
+        console.log('Conversion complete:', imageToScan);
       }
 
       // Step 2: Run OCR on the image (either the original or the converted one)
@@ -93,7 +105,7 @@ router.post(
       try {
         if (fs.existsSync(filePath)) fs.unlinkSync(filePath); // Delete original upload
         // If a PNG was created from a PDF, delete it too
-        if (imageToScan !== filePath && fs.existsSync(imageToScan)) {
+        if (imageToScan !== filePath && imageToScan && fs.existsSync(imageToScan)) {
           fs.unlinkSync(imageToScan);
         }
       } catch (e) {

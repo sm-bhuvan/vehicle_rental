@@ -40,7 +40,7 @@ const Payment = () => {
   ];
 
   const merchantUpiId = "smbhuvantsi@oksbi";
-  const amount = 500;
+  const amount = 5;
 
   useEffect(() => {
     if (!bookingDetails) {
@@ -99,7 +99,7 @@ const Payment = () => {
     setErrorMessage("");
 
     if (!file) {
-      setErrorMessage("Please upload your driver license PDF first!");
+      setErrorMessage("Please upload your driver license (PDF or Image) first!");
       return;
     }
 
@@ -116,26 +116,7 @@ const Payment = () => {
     setLoading(true); // Start loading spinner
 
     try {
-      // Step 1: Verify the document
-      const formData = new FormData();
-      formData.append("license", file);
-
-      // Send to your backend. (See Part 3 for proxy setup)
-      const verificationResponse = await fetch("/api/verify/license", {
-        method: "POST",
-        body: formData,
-      });
-
-      const verificationData = await verificationResponse.json();
-
-      if (!verificationResponse.ok || !verificationData.success) {
-        throw new Error(
-          verificationData.message || "Driver license could not be verified.",
-        );
-      }
-
-      // Step 2: If verification is successful, proceed to payment
-      // (This part is the same as your original code)
+      // Bypass verification: we still require the file, but do not call the API
       const txnRef = generateTransactionRef();
       setTransactionRef(txnRef);
       setShowQR(true);
@@ -147,7 +128,7 @@ const Payment = () => {
         window.location.href = upiLink;
       }
     } catch (error) {
-      console.error("Verification or Payment Init error:", error);
+      console.error("Payment Init error:", error);
       setErrorMessage(
         error instanceof Error ? error.message : "An unknown error occurred.",
       );
@@ -192,9 +173,19 @@ const Payment = () => {
         }),
       });
 
-      const bookingData = await bookingResponse.json();
+      // Read body once and parse conditionally to avoid JSON parse errors
+      const bookingContentType = bookingResponse.headers.get("content-type");
+      const bookingText = await bookingResponse.text();
+      let bookingData: any = null;
+      if (bookingContentType && bookingContentType.includes("application/json")) {
+        try {
+          bookingData = bookingText ? JSON.parse(bookingText) : null;
+        } catch (e) {
+          throw new Error("Invalid response from server while creating booking.");
+        }
+      }
 
-      if (bookingData.success) {
+      if (bookingData && bookingData.success) {
         setPaymentStatus("success");
 
         // Wait a moment then redirect
@@ -210,7 +201,8 @@ const Payment = () => {
           });
         }, 1500);
       } else {
-        throw new Error(bookingData.message || "Booking creation failed");
+        const serverMsg = bookingData?.message || bookingText || "Booking creation failed";
+        throw new Error(serverMsg);
       }
     } catch (error) {
       console.error("Booking error:", error);

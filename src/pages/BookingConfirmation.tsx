@@ -1,11 +1,12 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 const BookingConfirmation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  const { transactionId, bookingDetails, success, message } = location.state || {};
+  const { transactionId, transactionRef, bookingId, bookingDetails, success, message } = location.state || {};
+  const effectiveTxnId = transactionId || transactionRef;
 
   useEffect(() => {
     if (!bookingDetails) {
@@ -37,7 +38,7 @@ const BookingConfirmation = () => {
             <div className="space-y-4">
               <div>
                 <label className="text-gray-400 text-sm">Transaction ID</label>
-                <p className="text-white font-mono text-lg">{transactionId}</p>
+                <p className="text-white font-mono text-lg">{effectiveTxnId}</p>
               </div>
               
               <div>
@@ -85,9 +86,217 @@ const BookingConfirmation = () => {
         <div className="bg-blue-900/20 border border-blue-500 rounded-lg p-6 mb-8">
           <h3 className="text-xl font-semibold text-blue-400 mb-4">📧 Confirmation Email Sent</h3>
           <p className="text-gray-300">
-            A detailed confirmation email has been sent to <strong>{bookingDetails.email}</strong> 
+            A detailed confirmation email has been sent to <strong>{bookingDetails.email} </strong> 
             with all your booking information and important details.
           </p>
+        </div>
+
+        {/* Invoice + Download */}
+        <div className="bg-gray-800 rounded-lg p-8 mb-8">
+          <h2 className="text-2xl font-bold text-cyan-400 mb-6">Invoice</h2>
+          <div id="receipt-content" className="bg-gray-900 rounded-md p-6">
+            <div className="flex justify-between items-start border-b border-gray-700 pb-6 mb-6">
+              <div>
+                <h3 className="text-white font-bold text-2xl tracking-wide">BARS Wheels</h3>
+                <p className="text-gray-400 text-sm mt-1">Vehicle Rental Invoice</p>
+                <p className="text-gray-500 text-xs mt-2">Phone: +91 94433 18232 | Email: support@barswheels.com</p>
+              </div>
+              <div className="text-right">
+                <p className="text-gray-400 text-sm font-semibold">Invoice Date</p>
+                <p className="text-white font-medium">{new Date().toLocaleString()}</p>
+                <p className="text-gray-400 text-sm font-semibold mt-3">Invoice No.</p>
+                <p className="text-white font-mono">{bookingId || 'N/A'}</p>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
+              <div className="bg-gray-800 rounded p-4">
+                <p className="text-gray-400 text-xs font-semibold uppercase">Billed To</p>
+                <p className="text-white font-semibold mt-1">{bookingDetails.firstName} {bookingDetails.lastName}</p>
+                <p className="text-gray-300 text-sm mt-1">{bookingDetails.email}</p>
+                <p className="text-gray-300 text-sm">{bookingDetails.phone}</p>
+              </div>
+              <div className="bg-gray-800 rounded p-4">
+                <p className="text-gray-400 text-xs font-semibold uppercase">Payment</p>
+                <p className="text-white font-semibold mt-1">Transaction ID</p>
+                <p className="text-gray-300 font-mono text-sm">{effectiveTxnId}</p>
+                <p className="text-white font-semibold mt-3">Payment Method</p>
+                <p className="text-gray-300 text-sm">UPI</p>
+              </div>
+            </div>
+
+            <div className="overflow-hidden rounded border border-gray-700">
+              <table className="w-full text-left">
+                <thead className="bg-gray-800">
+                  <tr>
+                    <th className="px-4 py-3 text-gray-300 text-sm font-semibold">Item</th>
+                    <th className="px-4 py-3 text-gray-300 text-sm font-semibold">Details</th>
+                    <th className="px-4 py-3 text-gray-300 text-sm font-semibold text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-t border-gray-700">
+                    <td className="px-4 py-3 text-white font-medium">Vehicle Rental Processing</td>
+                    <td className="px-4 py-3 text-gray-300 text-sm">
+                      <div><span className="font-semibold text-white">Vehicle:</span> {bookingDetails.vehicleName}</div>
+                      <div><span className="font-semibold text-white">Pickup:</span> {new Date(bookingDetails.pickupDate).toLocaleString()}</div>
+                      <div><span className="font-semibold text-white">Return:</span> {new Date(bookingDetails.returnDate).toLocaleString()}</div>
+                    </td>
+                    <td className="px-4 py-3 text-white font-semibold text-right">₹{(location.state?.paymentAmount ?? 5).toString()}</td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr className="border-t border-gray-700 bg-gray-800">
+                    <td className="px-4 py-3" colSpan={2}>
+                      <span className="text-gray-300 text-sm font-semibold">Subtotal</span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="text-white font-semibold">₹{(location.state?.paymentAmount ?? 5).toString()}</span>
+                    </td>
+                  </tr>
+                  <tr className="border-t border-gray-700 bg-gray-800">
+                    <td className="px-4 py-3" colSpan={2}>
+                      <span className="text-gray-300 text-sm font-semibold">Tax</span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="text-white font-semibold">₹0</span>
+                    </td>
+                  </tr>
+                  <tr className="border-t border-gray-700 bg-gray-900">
+                    <td className="px-4 py-3" colSpan={2}>
+                      <span className="text-gray-300 text-sm font-bold">Total Paid</span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="text-white text-lg font-bold">₹{(location.state?.paymentAmount ?? 5).toString()}</span>
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            <div className="mt-6">
+              <p className="text-gray-400 text-sm font-semibold">Notes</p>
+              <p className="text-gray-400 text-xs mt-1">Thank you for your payment. Please present a valid driver license during vehicle pickup.</p>
+            </div>
+          </div>
+          <div className="mt-6">
+            <button
+              onClick={() => {
+                const printWindow = window.open('', '_blank', 'width=900,height=1200');
+                if (!printWindow) return;
+                const amount = (location.state?.paymentAmount ?? 5).toString();
+                const html = `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Invoice - BARS Wheels</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: Inter, Arial, sans-serif; color: #111827; margin: 0; padding: 32px; background: #ffffff; }
+    .invoice { max-width: 900px; margin: 0 auto; }
+    .header { display: flex; justify-content: space-between; border-bottom: 1px solid #e5e7eb; padding-bottom: 16px; margin-bottom: 24px; }
+    .brand { font-size: 22px; font-weight: 700; letter-spacing: .4px; }
+    .muted { color: #6b7280; }
+    .section { margin-bottom: 20px; }
+    .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .row { display: flex; gap: 8px; margin: 6px 0; }
+    .label { font-weight: 700; min-width: 150px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    table { width: 100%; border-collapse: collapse; }
+    @media print {
+      body { padding: 0; }
+    }
+  </style>
+  </head>
+  <body>
+    <div class="invoice">
+      <div class="header">
+        <div>
+          <div class="brand">BARS Wheels</div>
+          <div class="muted" style="font-size:13px; margin-top:4px;">Vehicle Rental Invoice</div>
+          <div class="muted" style="font-size:12px; margin-top:6px;">Phone: +91 94433 18232 | Email: support@barswheels.com</div>
+        </div>
+        <div>
+          <div class="row"><div class="label">Invoice Date:</div><div>${new Date().toLocaleString()}</div></div>
+          <div class="row"><div class="label">Invoice No.:</div><div class="mono">${bookingId || 'N/A'}</div></div>
+        </div>
+      </div>
+
+      <div class="grid section">
+        <div class="card">
+          <div class="muted" style="font-size:11px; font-weight:700; text-transform:uppercase;">Billed To</div>
+          <div class="row"><div class="label">Name:</div><div>${bookingDetails.firstName} ${bookingDetails.lastName}</div></div>
+          <div class="row"><div class="label">Email:</div><div>${bookingDetails.email}</div></div>
+          <div class="row"><div class="label">Phone:</div><div>${bookingDetails.phone}</div></div>
+        </div>
+        <div class="card">
+          <div class="muted" style="font-size:11px; font-weight:700; text-transform:uppercase;">Payment</div>
+          <div class="row"><div class="label">Transaction ID:</div><div class="mono">${effectiveTxnId}</div></div>
+          <div class="row"><div class="label">Method:</div><div>UPI</div></div>
+        </div>
+      </div>
+
+      <div class="card section">
+        <div class="row"><div class="label">Vehicle:</div><div>${bookingDetails.vehicleName}</div></div>
+        <div class="row"><div class="label">Pickup:</div><div>${new Date(bookingDetails.pickupDate).toLocaleString()}</div></div>
+        <div class="row"><div class="label">Return:</div><div>${new Date(bookingDetails.returnDate).toLocaleString()}</div></div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="text-align:left; padding:10px; background:#f3f4f6;">Item</th>
+            <th style="text-align:left; padding:10px; background:#f3f4f6;">Details</th>
+            <th style="text-align:right; padding:10px; background:#f3f4f6;">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding:10px; border-top:1px solid #e5e7eb; font-weight:600;">Vehicle Rental Processing</td>
+            <td style="padding:10px; border-top:1px solid #e5e7eb;">
+              <div class="row"><div class="label">Vehicle:</div><div>${bookingDetails.vehicleName}</div></div>
+              <div class="row"><div class="label">Pickup:</div><div>${new Date(bookingDetails.pickupDate).toLocaleString()}</div></div>
+              <div class="row"><div class="label">Return:</div><div>${new Date(bookingDetails.returnDate).toLocaleString()}</div></div>
+            </td>
+            <td style="padding:10px; border-top:1px solid #e5e7eb; text-align:right; font-weight:700;">₹${amount}</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td style="padding:10px; border-top:1px solid #e5e7eb;" colspan="2"><span class="label">Subtotal:</span></td>
+            <td style="padding:10px; border-top:1px solid #e5e7eb; text-align:right; font-weight:700;">₹${amount}</td>
+          </tr>
+          <tr>
+            <td style="padding:10px; border-top:1px solid #e5e7eb;" colspan="2"><span class="label">Tax:</span></td>
+            <td style="padding:10px; border-top:1px solid #e5e7eb; text-align:right; font-weight:700;">₹0</td>
+          </tr>
+          <tr>
+            <td style="padding:10px; border-top:1px solid #e5e7eb;" colspan="2"><span class="label">Total Paid:</span></td>
+            <td style="padding:10px; border-top:1px solid #e5e7eb; text-align:right; font-weight:800;">₹${amount}</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div class="section" style="margin-top:24px;">
+        <div class="label">Notes:</div>
+        <div class="muted" style="margin-top:6px; font-size:13px;">Thank you for your payment. Please present a valid driver license during vehicle pickup.</div>
+      </div>
+
+    </div>
+  </body>
+</html>`;
+                printWindow.document.write(html);
+                printWindow.document.close();
+                printWindow.focus();
+                printWindow.print();
+              }}
+              className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors"
+            >
+              Download Invoice (PDF)
+            </button>
+          </div>
         </div>
 
         <div className="bg-gray-800 rounded-lg p-6 mb-8">

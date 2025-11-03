@@ -129,7 +129,8 @@ router.post('/create-direct', [
           lastName,
           email,
           phone,
-          role: 'customer'
+          role: 'user',
+          password: Math.random().toString(36).slice(-12)
         });
         await user.save();
         console.log('✅ New user created');
@@ -142,16 +143,36 @@ router.post('/create-direct', [
     try {
       const nodemailer = require('nodemailer');
       
-      // Create transporter (use your SMTP settings)
-      const transporter = nodemailer.createTransporter({
-        host: process.env.SMTP_HOST || 'smtp.gmail.com',
-        port: process.env.SMTP_PORT || 587,
-        secure: false,
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS
-        }
-      });
+      // Create transporter
+      // Priority 1: MAILTRAP_TOKEN (Mailtrap Email Sending: smtp.mailtrap.io, user 'api')
+      // Priority 2: SMTP_* or EMAIL_* env vars
+      let transporter;
+      if (process.env.MAILTRAP_TOKEN) {
+        console.log('📧 Using Mailtrap Email Sending via MAILTRAP_TOKEN');
+        console.log('SMTP config:', { host: 'live.smtp.mailtrap.io', port: 587, user: 'api' });
+        transporter = nodemailer.createTransport({
+          host: 'live.smtp.mailtrap.io',
+          port: 587,
+          secure: false,
+          auth: { user: 'api', pass: process.env.MAILTRAP_TOKEN }
+        });
+      } else {
+        const host = process.env.SMTP_HOST || process.env.EMAIL_HOST || 'smtp.gmail.com';
+        const port = Number(process.env.SMTP_PORT || process.env.EMAIL_PORT || 587);
+        const user = process.env.SMTP_USER || process.env.EMAIL_USER;
+        const passSet = Boolean(process.env.SMTP_PASS || process.env.EMAIL_PASS);
+        console.log('📧 Using SMTP/EMAIL env vars');
+        console.log('SMTP config:', { host, port, user, passSet });
+        transporter = nodemailer.createTransport({
+          host,
+          port,
+          secure: false,
+          auth: {
+            user,
+            pass: process.env.SMTP_PASS || process.env.EMAIL_PASS
+          }
+        });
+      }
 
       const pickupDateStr = new Date(pickupDate).toLocaleDateString('en-IN', {
         weekday: 'long',
@@ -172,7 +193,7 @@ router.post('/create-direct', [
       });
 
       const mailOptions = {
-        from: process.env.SMTP_USER || 'noreply@barswheels.com',
+        from: (process.env.SMTP_FROM || process.env.EMAIL_FROM || process.env.SMTP_USER || process.env.EMAIL_USER || 'mailtrap@inbox.mailtrap.io'),
         to: email,
         subject: `Booking Confirmed - ${bookingId}`,
         html: `
