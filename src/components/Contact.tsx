@@ -134,7 +134,64 @@ const Contact = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Contact Info */}
           <div className="space-y-8">
-            {/* ... same contact info section ... */}
+            <div className="glass-card rounded-xl p-8">
+              <h3 className="text-2xl font-bold mb-6 text-neon">Contact Information</h3>
+              <div className="space-y-6">
+                <div className="flex items-start space-x-4">
+                  <Phone className="h-6 w-6 text-neon mt-1" />
+                  <div>
+                    <h4 className="font-semibold mb-1">Phone</h4>
+                    <p className="text-gray-400">+91 94433 18232</p>
+                    <p className="text-gray-400">+91 89037 35645</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-4">
+                  <Mail className="h-6 w-6 text-neon mt-1" />
+                  <div>
+                    <h4 className="font-semibold mb-1">Email</h4>
+                    <p className="text-gray-400">barswheels@gmail.com</p>
+                    <p className="text-gray-400">info.barsrental@gmail.com</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-4">
+                  <MapPin className="h-6 w-6 text-neon mt-1" />
+                  <div>
+                    <h4 className="font-semibold mb-1">Address</h4>
+                    <p className="text-gray-400">
+                      123 Luxury Avenue<br />
+                      Beverly Hills, CA 90210<br />
+                      United States
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-4">
+                  <Clock className="h-6 w-6 text-neon mt-1" />
+                  <div>
+                    <h4 className="font-semibold mb-1">Hours</h4>
+                    <p className="text-gray-400">
+                      24/7 Customer Support<br />
+                      Pickup: 6:00 AM - 11:00 PM
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            {/* <div className="glass-card rounded-xl p-8">
+              <h3 className="text-2xl font-bold mb-6 text-neon">Quick Actions</h3>
+              <div className="space-y-4">
+                <button className="btn-primary w-full justify-center">
+                  Book Now - Instant Quote
+                </button>
+                <div className="btn-outline w-full flex items-center justify-center">
+                  <ScheduleCall />
+                </div>
+                <button className="btn-outline w-full justify-center">
+                  Live Chat Support
+                </button>
+              </div>
+            </div> */}
           </div>
 
           {/* Contact Form */}

@@ -133,7 +133,7 @@ const ChatBot = () => {
 
     if (lowerText.includes("hour") || lowerText.includes("open")) {
       setTimeout(() => {
-        setIsTypING(false);
+        setIsTyping(false);
         setMessages((prev) => [...prev, { id: prev.length + 1, type: "bot", text: "We are open 24/7 for online bookings and support!" }]);
       }, 500);
       return true;
@@ -351,7 +351,7 @@ const ChatBot = () => {
       return { type: "text", name: "generic", autoComplete: "off", placeholder: "Ask me a question..." };
     }
     if (!userInfo.name) {
-      return { type: "text", name: "name", autoComplete: "name", placeholder: "Type your full name..." };
+      return { type: "text", name: "name", autoComplete: "given-name", placeholder: "Type your full name..." };
     }
     if (!userInfo.email) {
       return { type: "email", name: "email", autoComplete: "email", placeholder: "Type your email..." };
@@ -372,7 +372,7 @@ const ChatBot = () => {
 
   return (
     <>
-      <button onClick={() => setIsOpen(true)} className="fixed bottom-6 right-6 z-50 btn-primary rounded-full p-4 neon-glow shadow-lg">
+      <button type="button" onClick={() => setIsOpen(true)} className="fixed bottom-6 right-6 z-50 btn-primary rounded-full p-4 neon-glow shadow-lg" aria-label="Open chat">
         <MessageCircle className="h-6 w-6" />
       </button>
 
@@ -383,7 +383,7 @@ const ChatBot = () => {
               <Bot className="h-6 w-6 text-neon" />
               <span className="font-semibold text-neon">Vehicle Assistant</span>
             </div>
-            <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-foreground transition-colors">
+            <button type="button" onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-foreground transition-colors" aria-label="Close chat">
               <X className="h-5 w-5" />
             </button>
           </div>
@@ -398,7 +398,7 @@ const ChatBot = () => {
                 <div className={`max-w-[70%] p-3 rounded-lg ${message.type === "bot" ? "bg-secondary text-foreground" : "bg-primary text-primary-foreground"}`}>
                   <p className="text-sm">{message.text}</p>
                   {message.buttons && message.buttons.map((btn, idx) => (
-                    <button key={idx} onClick={() => handleUserClick(btn)} className="mt-2 mr-2 px-3 py-1 bg-primary text-white rounded hover:bg-primary/90 text-xs">
+                    <button key={idx} type="button" onClick={() => handleUserClick(btn)} className="mt-2 mr-2 px-3 py-1 bg-primary text-white rounded hover:bg-primary/90 text-xs">
                       {btn}
                     </button>
                   ))}
@@ -428,6 +428,7 @@ const ChatBot = () => {
             {/* --- NEW --- (Start Over button) */}
             {bookingStarted && (
               <button
+                type="button"
                 onClick={handleReset}
                 className="w-full mb-2 text-xs text-cyan-400 hover:text-cyan-200"
               >
@@ -446,7 +447,10 @@ const ChatBot = () => {
                 onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
                 className="flex-1 px-3 py-2 bg-input border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
-              <button onClick={handleSendMessage} className="px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+              <button type="button" onClick={handleSendMessage} 
+                className="px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors" 
+                aria-label="Send message"
+              >
                 <Send className="h-4 w-4" />
               </button>
             </div>
