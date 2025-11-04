@@ -26,7 +26,6 @@ const logger  = require('./middlewares/logger');
 
 const app = express();
 
-app.use('/api/reviews', reviewRoutes);
 // Security middlewares
 app.use(helmet());
 app.use(cors({
@@ -75,7 +74,7 @@ app.use('/api/rental-companies', rentalCompanyRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api', verificationRoutes); // License verification enabled
-
+app.use('/api/reviews', reviewRoutes);
 // 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({ 

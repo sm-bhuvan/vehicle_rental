@@ -20,19 +20,28 @@ export default function Review() {
     const fetchVehicles = async () => {
       try {
         const response = await fetch('http://localhost:5000/api/reviews/vehicles');
+        console.log('Response status:', response.status);
+        
         if (response.ok) {
           const data = await response.json();
-          console.log('Fetched vehicles:', data);
-          if (Array.isArray(data)) {
+          console.log('Fetched vehicles data:', data);
+          console.log('Is array?', Array.isArray(data));
+          console.log('Data length:', data?.length);
+          console.log('First vehicle:', data[0]);
+          
+          if (Array.isArray(data) && data.length > 0) {
+            console.log('Setting vehicles:', data);
             setVehicles(data);
-          } else if (data.vehicles && Array.isArray(data.vehicles)) {
+          } else if (data.vehicles && Array.isArray(data.vehicles) && data.vehicles.length > 0) {
+            console.log('Setting vehicles from data.vehicles:', data.vehicles);
             setVehicles(data.vehicles);
           } else {
-            console.error('Unexpected data format:', data);
+            console.error('Unexpected data format or empty array:', data);
             setVehicles([]);
           }
         } else {
-          console.error('Failed to fetch vehicles, status:', response.status);
+          const errorText = await response.text();
+          console.error('Failed to fetch vehicles, status:', response.status, 'Response:', errorText);
           setVehicles([]);
         }
       } catch (error) {
@@ -245,7 +254,7 @@ export default function Review() {
                     </div>
                   ) : vehicles.length === 0 ? (
                     <div className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-gray-400">
-                      No vehicles available
+                      No vehicles available. Please check console for errors.
                     </div>
                   ) : (
                     <div className="relative">
@@ -255,15 +264,19 @@ export default function Review() {
                         className="w-full px-4 py-3 pr-10 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-white appearance-none cursor-pointer"
                       >
                         <option value="">Choose a vehicle...</option>
-                        {Array.isArray(vehicles) && vehicles.map((vehicle) => (
+                        {vehicles.map((vehicle) => (
                           <option key={vehicle._id} value={vehicle._id}>
-                            {vehicle.name} {vehicle.rating > 0 ? `★ ${vehicle.rating.toFixed(1)}` : '(No reviews yet)'}
+                            {vehicle.name} {vehicle.rating > 0 ? `★ ${vehicle.rating.toFixed(1)} (${vehicle.reviews} reviews)` : '(No reviews yet)'}
                           </option>
                         ))}
                       </select>
                       <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
                     </div>
                   )}
+                  {/* Debug info */}
+                  <p className="text-xs text-gray-500 mt-1">
+                    {vehicles.length > 0 ? `${vehicles.length} vehicles loaded` : 'No vehicles loaded - check browser console'}
+                  </p>
                 </div>
 
                 {/* Rating */}
