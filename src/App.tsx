@@ -10,6 +10,7 @@ import Home from "./pages/Home";
 import Vehicles from "./pages/Vehicles";
 import About from "./pages/About";
 import Services from "./pages/Services";
+import Review from "./pages/Review";
 import ContactPage from "./pages/ContactPage";
 import NotFound from "./pages/NotFound";
 import AdminLogin from "./pages/AdminLogin";
@@ -39,6 +40,7 @@ const App = () => (
                 <Route path="/vehicles" element={<Vehicles />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/services" element={<Services />} />
+                <Route path="/review" element={<Review />} />
                 <Route path="/contact" element={<ContactPage />} />
                 <Route path="/payment" element={<Payment/>} />
                 <Route path="/booking-confirmation" element={<BookingConfirmation/>} />
@@ -69,7 +71,8 @@ const App = () => (
                     </ProtectedRoute>
                   } 
                 />
-                
+
+                <Route path="/review" element={<Review />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

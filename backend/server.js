@@ -18,7 +18,7 @@ const rentalCompanyRoutes = require('./routes/rentalCompanies');
 const adminRoutes = require('./routes/admin');
 const userRoutes = require('./routes/users');
 const verificationRoutes = require('./routes/verification');
-
+const reviewRoutes = require('./routes/reviewRoutes');
 // Import middlewares
 const { auth } = require('./middlewares/auth');
 const errorHandler = require('./middlewares/errorHandler');
@@ -26,6 +26,7 @@ const logger  = require('./middlewares/logger');
 
 const app = express();
 
+app.use('/api/reviews', reviewRoutes);
 // Security middlewares
 app.use(helmet());
 app.use(cors({

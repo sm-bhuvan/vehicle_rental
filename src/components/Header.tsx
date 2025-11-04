@@ -49,6 +49,12 @@ const Header = () => {
               About
             </Link>
             <Link 
+              to="/review" 
+              className={`hover:text-neon transition-colors ${isActive('/review') ? 'text-neon' : ''}`}
+            >
+              Review
+            </Link>
+            <Link 
               to="/contact" 
               className={`hover:text-neon transition-colors ${isActive('/contact') ? 'text-neon' : ''}`}
             >
