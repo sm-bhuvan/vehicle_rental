@@ -1,4 +1,4 @@
-import { Star, Send, ThumbsUp, ChevronDown } from "lucide-react";
+import { Star, Send, ThumbsUp, ChevronDown, Car, Users, Fuel, Settings, ArrowLeft } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export default function Review() {
@@ -14,6 +14,7 @@ export default function Review() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [showReviewForm, setShowReviewForm] = useState(false);
 
   // Fetch all vehicles from database
   useEffect(() => {
@@ -25,18 +26,10 @@ export default function Review() {
         if (response.ok) {
           const data = await response.json();
           console.log('Fetched vehicles data:', data);
-          console.log('Is array?', Array.isArray(data));
-          console.log('Data length:', data?.length);
-          console.log('First vehicle:', data[0]);
           
           if (Array.isArray(data) && data.length > 0) {
-            console.log('Setting vehicles:', data);
             setVehicles(data);
-          } else if (data.vehicles && Array.isArray(data.vehicles) && data.vehicles.length > 0) {
-            console.log('Setting vehicles from data.vehicles:', data.vehicles);
-            setVehicles(data.vehicles);
           } else {
-            console.error('Unexpected data format or empty array:', data);
             setVehicles([]);
           }
         } else {
@@ -67,6 +60,12 @@ export default function Review() {
     const vehicleId = e.target.value;
     const vehicle = vehicles.find(v => v._id === vehicleId);
     setSelectedVehicle(vehicle || null);
+  };
+
+  const handleReviewClick = (vehicle: any) => {
+    setSelectedVehicle(vehicle);
+    setShowReviewForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const validateForm = () => {
@@ -120,6 +119,7 @@ export default function Review() {
         setFormData({ name: '', email: '', review: '' });
         setRating(0);
         setSelectedVehicle(null);
+        setShowReviewForm(false);
       } else {
         const errorData = await response.json();
         alert(errorData.message || 'Failed to submit review. Please try again.');
@@ -175,8 +175,128 @@ export default function Review() {
             }}
             className="px-6 py-3 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg transition-colors font-semibold"
           >
-            Submit Another Review
+            Back to Vehicles
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (showReviewForm && selectedVehicle) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black py-20 px-4">
+        <div className="container mx-auto max-w-4xl">
+          {/* Back Button */}
+          <button
+            onClick={() => {
+              setShowReviewForm(false);
+              setSelectedVehicle(null);
+              setRating(0);
+              setFormData({ name: '', email: '', review: '' });
+            }}
+            className="mb-8 flex items-center space-x-2 text-cyan-400 hover:text-cyan-300 transition-colors"
+          >
+            <ArrowLeft className="h-5 w-5" />
+            <span>Back to Vehicles</span>
+          </button>
+
+          {/* Selected Vehicle Info */}
+          <div className="bg-gray-800 bg-opacity-50 backdrop-blur-lg border border-gray-700 rounded-xl p-6 mb-8 shadow-xl">
+            <h3 className="text-xl font-bold mb-4 text-cyan-400">Writing Review For</h3>
+            <div className="flex items-center space-x-4">
+              <Car className="h-12 w-12 text-cyan-400" />
+              <div>
+                <p className="text-white font-semibold text-2xl">{selectedVehicle.name}</p>
+                {selectedVehicle.rating > 0 && (
+                  <div className="flex items-center space-x-2 mt-2">
+                    <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                    <span className="text-gray-400">
+                      {selectedVehicle.rating.toFixed(1)} ({selectedVehicle.reviews || 0} reviews)
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Review Form */}
+          <div className="bg-gray-800 bg-opacity-50 backdrop-blur-lg border border-gray-700 rounded-xl p-8 shadow-xl">
+            <h3 className="text-2xl font-bold mb-6 text-cyan-400">Your Review</h3>
+
+            <div className="space-y-6">
+              {/* Rating */}
+              <div>
+                <label className="block text-sm font-medium mb-3 text-gray-300">
+                  Your Rating <span className="text-red-500">*</span>
+                </label>
+                <StarRating />
+                {rating > 0 && (
+                  <p className="text-sm text-gray-400 mt-2">
+                    {rating === 5 && "Excellent! ⭐"}
+                    {rating === 4 && "Very Good! 👍"}
+                    {rating === 3 && "Good 👌"}
+                    {rating === 2 && "Fair 😐"}
+                    {rating === 1 && "Needs Improvement 😞"}
+                  </p>
+                )}
+              </div>
+
+              {/* Name */}
+              <div>
+                <label className="block text-sm font-medium mb-2 text-gray-300">
+                  Your Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  placeholder="John Doe"
+                  className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-white placeholder-gray-500"
+                />
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-medium mb-2 text-gray-300">
+                  Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  placeholder="john@example.com"
+                  className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-white placeholder-gray-500"
+                />
+              </div>
+
+              {/* Review Text */}
+              <div>
+                <label className="block text-sm font-medium mb-2 text-gray-300">
+                  Your Review <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  name="review"
+                  value={formData.review}
+                  onChange={handleInputChange}
+                  rows={6}
+                  placeholder="Tell us about your experience with this vehicle. What did you like? What could be improved?"
+                  className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 resize-none text-white placeholder-gray-500"
+                />
+              </div>
+
+              {/* Submit Button */}
+              <button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="w-full px-6 py-3 bg-cyan-500 hover:bg-cyan-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center justify-center space-x-2 font-semibold shadow-lg"
+              >
+                <Send className="h-5 w-5" />
+                <span>{isSubmitting ? 'Submitting...' : 'Submit Review'}</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -184,176 +304,74 @@ export default function Review() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black py-20 px-4">
-      <div className="container mx-auto max-w-6xl">
+      <div className="container mx-auto max-w-7xl">
         {/* Header */}
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
             Share Your <span className="text-cyan-400">Experience</span>
           </h2>
           <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-            We value your feedback! Select a vehicle and let us know about your experience.
+            Select a vehicle you've experienced and share your valuable feedback
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Info Sidebar */}
-          <div className="space-y-6">
-            <div className="bg-gray-800 bg-opacity-50 backdrop-blur-lg border border-gray-700 rounded-xl p-8 shadow-xl">
-              <h3 className="text-2xl font-bold mb-6 text-cyan-400">Why Review?</h3>
-              <div className="space-y-4 text-gray-400">
-                <p>
-                  Your feedback helps us improve our services and helps other customers make informed decisions.
-                </p>
-                <div className="space-y-3 mt-6">
-                  <div className="flex items-center space-x-3">
-                    <Star className="h-5 w-5 text-cyan-400 flex-shrink-0" />
-                    <span>Rate your experience</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Star className="h-5 w-5 text-cyan-400 flex-shrink-0" />
-                    <span>Share your thoughts</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Star className="h-5 w-5 text-cyan-400 flex-shrink-0" />
-                    <span>Help us serve better</span>
-                  </div>
+        {/* Vehicles Grid */}
+        {isLoadingVehicles ? (
+          <div className="text-center text-gray-400">Loading vehicles...</div>
+        ) : vehicles.length === 0 ? (
+          <div className="text-center text-gray-400">No vehicles available</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {vehicles.map((vehicle) => (
+              <div
+                key={vehicle._id}
+                className="bg-gray-800 bg-opacity-50 backdrop-blur-lg border border-gray-700 rounded-xl overflow-hidden shadow-xl hover:shadow-2xl hover:border-cyan-500 transition-all duration-300"
+              >
+                {/* Vehicle Image */}
+                <div className="h-48 bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center">
+                  <Car className="h-24 w-24 text-cyan-400 opacity-50" />
                 </div>
-              </div>
-            </div>
 
-            {selectedVehicle && (
-              <div className="bg-gray-800 bg-opacity-50 backdrop-blur-lg border border-gray-700 rounded-xl p-8 shadow-xl">
-                <h3 className="text-xl font-bold mb-4 text-cyan-400">Selected Vehicle</h3>
-                <p className="text-white font-semibold text-lg mb-3">{selectedVehicle.name}</p>
-                {selectedVehicle.rating > 0 && (
-                  <div className="flex items-center space-x-2">
-                    <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                    <span className="text-gray-400">
-                      {selectedVehicle.rating.toFixed(1)} ({selectedVehicle.reviews || 0} {selectedVehicle.reviews === 1 ? 'review' : 'reviews'})
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Review Form */}
-          <div className="lg:col-span-2">
-            <div className="bg-gray-800 bg-opacity-50 backdrop-blur-lg border border-gray-700 rounded-xl p-8 shadow-xl">
-              <h3 className="text-2xl font-bold mb-6 text-cyan-400">Write Your Review</h3>
-
-              <div className="space-y-6">
-                {/* Vehicle Selection */}
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">
-                    Select Vehicle <span className="text-red-500">*</span>
-                  </label>
-                  {isLoadingVehicles ? (
-                    <div className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-gray-400">
-                      Loading vehicles...
-                    </div>
-                  ) : vehicles.length === 0 ? (
-                    <div className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-gray-400">
-                      No vehicles available. Please check console for errors.
+                {/* Vehicle Info */}
+                <div className="p-6">
+                  <h3 className="text-xl font-bold text-white mb-3">{vehicle.name}</h3>
+                  
+                  {/* Rating */}
+                  {vehicle.rating > 0 ? (
+                    <div className="flex items-center space-x-2 mb-4">
+                      <div className="flex">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            className={`h-4 w-4 ${
+                              star <= Math.round(vehicle.rating)
+                                ? 'fill-yellow-400 text-yellow-400'
+                                : 'text-gray-600'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-gray-400 text-sm">
+                        {vehicle.rating.toFixed(1)} ({vehicle.reviews} reviews)
+                      </span>
                     </div>
                   ) : (
-                    <div className="relative">
-                      <select
-                        value={selectedVehicle?._id || ''}
-                        onChange={handleVehicleSelect}
-                        className="w-full px-4 py-3 pr-10 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-white appearance-none cursor-pointer"
-                      >
-                        <option value="">Choose a vehicle...</option>
-                        {vehicles.map((vehicle) => (
-                          <option key={vehicle._id} value={vehicle._id}>
-                            {vehicle.name} {vehicle.rating > 0 ? `★ ${vehicle.rating.toFixed(1)} (${vehicle.reviews} reviews)` : '(No reviews yet)'}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
-                    </div>
+                    <div className="text-gray-500 text-sm mb-4">No reviews yet - Be the first!</div>
                   )}
-                  {/* Debug info */}
-                  <p className="text-xs text-gray-500 mt-1">
-                    {vehicles.length > 0 ? `${vehicles.length} vehicles loaded` : 'No vehicles loaded - check browser console'}
-                  </p>
-                </div>
 
-                {/* Rating */}
-                <div>
-                  <label className="block text-sm font-medium mb-3 text-gray-300">
-                    Your Rating <span className="text-red-500">*</span>
-                  </label>
-                  <StarRating />
-                  {rating > 0 && (
-                    <p className="text-sm text-gray-400 mt-2">
-                      {rating === 5 && "Excellent! ⭐"}
-                      {rating === 4 && "Very Good! 👍"}
-                      {rating === 3 && "Good 👌"}
-                      {rating === 2 && "Fair 😐"}
-                      {rating === 1 && "Needs Improvement 😞"}
-                    </p>
-                  )}
+                  {/* Write Review Button */}
+                  <button
+                    onClick={() => handleReviewClick(vehicle)}
+                    className="w-full px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg transition-colors font-semibold flex items-center justify-center space-x-2"
+                  >
+                    <Star className="h-4 w-4" />
+                    <span>Write Review</span>
+                  </button>
                 </div>
-
-                {/* Name */}
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">
-                    Your Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    placeholder="John Doe"
-                    className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-white placeholder-gray-500"
-                  />
-                </div>
-
-                {/* Email */}
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">
-                    Email <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    placeholder="john@example.com"
-                    className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-white placeholder-gray-500"
-                  />
-                </div>
-
-                {/* Review Text */}
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">
-                    Your Review <span className="text-red-500">*</span>
-                  </label>
-                  <textarea
-                    name="review"
-                    value={formData.review}
-                    onChange={handleInputChange}
-                    rows={6}
-                    placeholder="Tell us about your experience with this vehicle. What did you like? What could be improved?"
-                    className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 resize-none text-white placeholder-gray-500"
-                  />
-                </div>
-
-                {/* Submit Button */}
-                <button
-                  onClick={handleSubmit}
-                  disabled={isSubmitting}
-                  className="w-full px-6 py-3 bg-cyan-500 hover:bg-cyan-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center justify-center space-x-2 font-semibold shadow-lg"
-                >
-                  <Send className="h-5 w-5" />
-                  <span>{isSubmitting ? 'Submitting...' : 'Submit Review'}</span>
-                </button>
               </div>
-            </div>
+            ))}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
