@@ -16,7 +16,8 @@ router.get('/', [
   query('maxPrice').optional().isFloat({ min: 0 }),
   query('city').optional().isString(),
   query('available').optional().isBoolean(),
-  query('search').optional().isString()
+  query('search').optional().isString(),
+  query('minSeats').optional().isInt({ min: 1 }).toInt()
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -38,6 +39,7 @@ router.get('/', [
       city,
       available,
       search,
+      minSeats,
       sortBy = 'createdAt',
       sortOrder = 'desc'
     } = req.query;
@@ -64,6 +66,11 @@ router.get('/', [
         { model: new RegExp(search, 'i') },
         { category: new RegExp(search, 'i') }
       ];
+    }
+
+    // Filter by minimum seats
+    if (minSeats) {
+      filter['specifications.seatingCapacity'] = { $gte: parseInt(minSeats) };
     }
 
     // Calculate skip value

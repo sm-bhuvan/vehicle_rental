@@ -14,13 +14,14 @@ const Contact = () => {
     phone: '',
     message: ''
   });
+  const [selectedVehicleName, setSelectedVehicleName] = useState<string>('');
 
   const location = useLocation();
   const navigate = useNavigate();
   const { updateVehicle } = useVehicles();
 
   // Extract vehicle info from previous page
-  const { vehicleName, vehicleId } = useMemo(() => ({
+  const { vehicleName: vehicleNameFromState, vehicleId } = useMemo(() => ({
     vehicleName: (location.state as any)?.vehicleName as string | undefined,
     vehicleId: (location.state as any)?.vehicleId as number | undefined,
   }), [location.state]);
@@ -29,15 +30,36 @@ const Contact = () => {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
 
+    // Get firstName and lastName from query params (from chatbot)
+    const firstName = params.get("firstName");
+    const lastName = params.get("lastName");
+    
+    // Also check for legacy "name" param for backward compatibility
     const fullName = params.get("name") || "";
     const [first, last] = fullName.split(" ");
+    
     setFormData((prev) => ({
       ...prev,
-      firstName: first || "",
-      lastName: last || "",
+      firstName: firstName || first || prev.firstName || "",
+      lastName: lastName || last || prev.lastName || "",
       email: params.get("email") || prev.email,
       phone: params.get("phone") || prev.phone,
     }));
+
+    // Get vehicle name from query params (from chatbot)
+    const vehicleNameFromParams = params.get("vehicleName");
+    if (vehicleNameFromParams) {
+      setSelectedVehicleName(vehicleNameFromParams);
+    }
+
+    // Get message from query params (from chatbot)
+    const messageFromParams = params.get("message");
+    if (messageFromParams) {
+      setFormData((prev) => ({
+        ...prev,
+        message: decodeURIComponent(messageFromParams),
+      }));
+    }
 
     // Set pickup and return dates
     const pickup = params.get("pickup");
@@ -45,6 +67,13 @@ const Contact = () => {
     if (pickup) setPickupDate(new Date(pickup));
     if (drop) setReturnDate(new Date(drop));
   }, [location.search]);
+
+  // Also check location.state for vehicle name (from direct navigation from vehicles page)
+  useEffect(() => {
+    if (vehicleNameFromState && !selectedVehicleName) {
+      setSelectedVehicleName(vehicleNameFromState);
+    }
+  }, [vehicleNameFromState, selectedVehicleName]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -124,11 +153,14 @@ const Contact = () => {
           pickupDate.getDate() === today.getDate();
       }
 
-      if (vehicleName && sameDay) {
+      // Use vehicleName from state or selectedVehicleName (from query params)
+      const finalVehicleName = vehicleNameFromState || selectedVehicleName;
+
+      if (finalVehicleName && sameDay) {
         await fetch('/api/vehicles/book-by-name', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: vehicleName, startDate: pickupDate?.toISOString() })
+          body: JSON.stringify({ name: finalVehicleName, startDate: pickupDate?.toISOString() })
         });
       }
 
@@ -140,7 +172,7 @@ const Contact = () => {
         state: {
           bookingDetails: {
             ...formData,
-            vehicleName,
+            vehicleName: finalVehicleName,
             vehicleId,
             pickupDate: pickupDate?.toISOString(),
             returnDate: returnDate?.toISOString(),
@@ -297,7 +329,7 @@ const Contact = () => {
                 <input
                   type="text"
                   readOnly
-                  value={vehicleName || ''}
+                  value={vehicleNameFromState || selectedVehicleName || ''}
                   placeholder="Select from vehicles page"
                   className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 />

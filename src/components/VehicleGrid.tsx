@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { Search, Filter } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import VehicleCard from "./VehicleCard";
 import { Vehicle } from "../types/vehicle";
 import { useVehicles } from "../contexts/VehicleContext";
 
 const VehicleGrid = () => {
+  const location = useLocation();
   const { vehicles } = useVehicles();
   const [filteredVehicles, setFilteredVehicles] = useState<Vehicle[]>([]);
   const [selectedType, setSelectedType] = useState("All");
@@ -14,17 +16,52 @@ const VehicleGrid = () => {
   // Get unique vehicle types from the current vehicles
   const vehicleTypes = ["All", ...Array.from(new Set(vehicles.map(v => v.type)))];
 
-  // Update filtered vehicles when vehicles change
+  // Read vehicle name from URL query params and auto-fill search
   useEffect(() => {
-    setFilteredVehicles(vehicles);
-  }, [vehicles]);
+    const params = new URLSearchParams(location.search);
+    const nameFromUrl = params.get("name");
+    if (nameFromUrl) {
+      // Set the search term to the vehicle name from URL
+      setSearchTerm(nameFromUrl);
+    }
+  }, [location.search]);
+
+  // Update filtered vehicles when vehicles or filters change
+  useEffect(() => {
+    let filtered = vehicles;
+
+    // Filter by type
+    if (selectedType !== "All") {
+      filtered = filtered.filter(vehicle => 
+        vehicle.type.toLowerCase() === selectedType.toLowerCase()
+      );
+    }
+
+    // Filter by price range
+    filtered = filtered.filter(
+      vehicle =>
+        vehicle.pricePerDay >= priceRange[0] &&
+        vehicle.pricePerDay <= priceRange[1]
+    );
+
+    // Filter by search term (vehicle name) - prioritize this if URL has name param
+    if (searchTerm) {
+      filtered = filtered.filter(vehicle =>
+        vehicle.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    setFilteredVehicles(filtered);
+  }, [vehicles, selectedType, priceRange, searchTerm]);
 
   const handleFilter = () => {
     let filtered = vehicles;
 
     // Filter by type
     if (selectedType !== "All") {
-      filtered = filtered.filter(vehicle => vehicle.type === selectedType);
+      filtered = filtered.filter(vehicle => 
+        vehicle.type.toLowerCase() === selectedType.toLowerCase()
+      );
     }
 
     // Filter by price range
