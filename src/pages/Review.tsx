@@ -328,8 +328,36 @@ export default function Review() {
                 className="bg-gray-800 bg-opacity-50 backdrop-blur-lg border border-gray-700 rounded-xl overflow-hidden shadow-xl hover:shadow-2xl hover:border-cyan-500 transition-all duration-300"
               >
                 {/* Vehicle Image */}
-                <div className="h-48 bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center">
-                  <Car className="h-24 w-24 text-cyan-400 opacity-50" />
+                <div className="h-48 bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center relative">
+                  {vehicle.image ? (
+                    <>
+                      <img 
+                        src={vehicle.image} 
+                        alt={vehicle.name} 
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          console.error('Image failed to load for', vehicle.name);
+                          console.error('Image URL:', vehicle.image);
+                          console.error('Error event:', e);
+                          const target = e.currentTarget as HTMLImageElement;
+                          target.style.display = 'none';
+                        }}
+                        onLoad={() => {
+                          console.log('Image loaded successfully:', vehicle.name, vehicle.image);
+                        }}
+                      />
+                      <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500 bg-gradient-to-br from-gray-700 to-gray-900" style={{ display: 'none' }} id={`fallback-${vehicle._id}`}>
+                        <Car className="h-16 w-16 mb-2" />
+                        <span className="text-sm">Image unavailable</span>
+                        <span className="text-xs mt-1 px-2 text-center break-all max-w-full">{vehicle.image?.substring(0, 50)}...</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-gray-500">
+                      <Car className="h-16 w-16 mb-2" />
+                      <span className="text-sm">No image URL</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Vehicle Info */}

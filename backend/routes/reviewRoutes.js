@@ -32,6 +32,7 @@ router.get('/vehicles', async (req, res) => {
       return {
         _id: v._id,
         name: v.name || 'Unknown Vehicle',
+        image: v.image_url || v.image || 'Unknown Image',
         rating: v.rating || 0,
         reviews: v.reviews || 0
       };
