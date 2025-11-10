@@ -7,6 +7,40 @@ const Quote = require('../models/Quote');
 const { adminAuth } = require('../middlewares/auth');
 const router = express.Router();
 
+// Helper function to convert data to CSV
+const convertToCSV = (data, type) => {
+    if (!data || data.length === 0) {
+        return '';
+    }
+
+    const headers = Object.keys(data[0]);
+    const csvHeaders = headers.join(',');
+    
+    const csvRows = data.map(row => {
+        return headers.map(header => {
+            const value = row[header];
+            if (value === null || value === undefined) {
+                return '';
+            }
+            // Handle nested objects and arrays
+            if (typeof value === 'object' && !Array.isArray(value)) {
+                return JSON.stringify(value);
+            }
+            if (Array.isArray(value)) {
+                return value.join('; ');
+            }
+            // Escape quotes and wrap in quotes if contains comma
+            const stringValue = String(value);
+            if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+                return `"${stringValue.replace(/"/g, '""')}"`;
+            }
+            return stringValue;
+        }).join(',');
+    });
+
+    return [csvHeaders, ...csvRows].join('\n');
+};
+
 // Dashboard statistics
 router.get('/dashboard', adminAuth, async (req, res) => {
     try {
@@ -34,7 +68,7 @@ router.get('/dashboard', adminAuth, async (req, res) => {
             Vehicle.countDocuments({ isActive: true }),
             Rental.countDocuments({ rentalStatus: 'active' }),
             Quote.countDocuments({ status: 'pending' }),
-            Vehicle.countDocuments({ isActive: true, availability: true })
+            Vehicle.countDocuments({ isActive: true, isAvailable: true })
         ]);
 
         // Recent activities
@@ -343,7 +377,7 @@ router.get('/reports', adminAuth, [
                             model: 1,
                             year: 1,
                             type: 1,
-                            availability: 1,
+                            isAvailable: 1,
                             condition: 1,
                             totalRentals: { $size: '$rentals' },
                             totalRevenue: { $sum: '$rentals.totalAmount' }, // Still here, based on rental amount

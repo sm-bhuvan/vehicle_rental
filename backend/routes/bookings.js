@@ -139,7 +139,8 @@ router.post('/create-direct', [
       console.log('⚠️ User creation skipped:', userErr.message);
     }
 
-    // Send email notification
+    // Send email notification (disabled for testing)
+    /*
     try {
       const nodemailer = require('nodemailer');
       
@@ -315,6 +316,7 @@ router.post('/create-direct', [
       console.error('⚠️ Email sending failed:', emailErr.message);
       // Don't fail the booking if email fails
     }
+    */
 
     // Return success
     res.status(201).json({
